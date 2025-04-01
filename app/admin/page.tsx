@@ -10,13 +10,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Copy, Check, Printer, FileText, ShoppingBag, Truck } from "lucide-react"
+import {
+  AlertCircle,
+  Copy,
+  Check,
+  Printer,
+  FileText,
+  ShoppingBag,
+  Truck,
+  Settings,
+  ShieldAlert,
+  NavigationOffIcon as ShoppingCartOff,
+} from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { getAllOrders, updateOrder } from "@/lib/db"
 import type { Order } from "@/lib/db"
 import { TrackingDialog } from "@/components/tracking-dialog"
-
-// Voeg de import toe aan het begin van het bestand
+import Link from "next/link"
 import { PrintTable } from "@/components/print-table"
 
 // Type voor gegroepeerde bestellingen
@@ -803,6 +813,69 @@ export default function AdminPage() {
           </div>
         </CardFooter>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Link href="/admin/site-settings">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" /> Website Instellingen
+              </CardTitle>
+              <CardDescription>Beheer de status van de website</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Zet de website in onderhoudsmodus of sluit de webshop voor nieuwe bestellingen.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full">Instellingen Beheren</Button>
+            </CardFooter>
+          </Card>
+        </Link>
+
+        <Link href="/admin/site-settings">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-amber-500" /> Onderhoudsmodus
+              </CardTitle>
+              <CardDescription>Zet de site in onderhoudsmodus</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Activeer onderhoudsmodus om tijdelijk alle toegang tot de website te blokkeren met een wachtwoord.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full" variant="outline">
+                Onderhoudsmodus Beheren
+              </Button>
+            </CardFooter>
+          </Card>
+        </Link>
+
+        <Link href="/admin/site-settings">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCartOff className="h-5 w-5 text-destructive" /> Webshop Sluiten
+              </CardTitle>
+              <CardDescription>Tijdelijk sluiten voor bestellingen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Sluit alleen de webshop voor nieuwe bestellingen, terwijl de rest van de site toegankelijk blijft.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full" variant="outline">
+                Webshop Status Beheren
+              </Button>
+            </CardFooter>
+          </Card>
+        </Link>
+      </div>
 
       {/* Tracking Dialog */}
       {selectedOrder && (
