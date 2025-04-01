@@ -146,7 +146,7 @@ export default function HomePage() {
             </div>
             <div className="mt-6 md:mt-0">
               <h3 className="text-lg font-semibold text-foreground">Contact</h3>
-              <p className="mt-2 text-muted-foreground">Telefoon: 06-47619606</p>
+              <p className="mt-2 text-muted-foreground">Telefoon: 06-44947194</p>
             </div>
           </div>
           <div className="mt-8 text-center text-muted-foreground text-sm">

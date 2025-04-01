@@ -179,7 +179,7 @@ export default function CrewAccess() {
           <AlertDescription>
             <p>
               Je crew bestelling is verzonden. <strong className="text-primary">Stuur een WhatsApp</strong> naar{" "}
-              <strong className="text-primary">06-47619606</strong> met je crew bestelnummer:
+              <strong className="text-primary">06-44947194</strong> met je crew bestelnummer:
             </p>
 
             <div className="relative mt-4 mb-4">

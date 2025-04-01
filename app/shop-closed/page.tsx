@@ -29,7 +29,7 @@ export default function ShopClosedPage() {
 
           <div className="flex items-center justify-center mt-6 p-4 bg-muted rounded-lg">
             <Phone className="h-5 w-5 mr-2 text-primary" />
-            <span>Voor vragen: 06-47619606</span>
+            <span>Voor vragen: 06-44947194</span>
           </div>
         </CardContent>
         <CardFooter className="flex justify-center">

@@ -159,7 +159,7 @@ export default function OrderForm() {
           <AlertDescription>
             <p>
               Je bestelling is verzonden. <strong className="text-primary">Stuur een WhatsApp</strong> naar{" "}
-              <strong className="text-primary">06-47619606</strong> met je bestelnummer:
+              <strong className="text-primary">06-44947194</strong> met je bestelnummer:
             </p>
 
             <div className="relative mt-4 mb-4">
@@ -363,7 +363,7 @@ export default function OrderForm() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Belangrijk!</AlertTitle>
             <AlertDescription>
-              Na het verzenden van je bestelling ontvang je een bestelnummer. Stuur dit nummer naar 06-47619606 via
+              Na het verzenden van je bestelling ontvang je een bestelnummer. Stuur dit nummer naar 06-44947194 via
               WhatsApp om je bestelling te voltooien.
             </AlertDescription>
           </Alert>
