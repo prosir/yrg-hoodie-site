@@ -37,11 +37,6 @@ export default function HomePage() {
                   Crew
                 </a>
               </li>
-              <li>
-                <Link href="/admin" className="text-muted-foreground hover:text-primary transition-colors">
-                  Admin
-                </Link>
-              </li>
             </ul>
           </nav>
         </div>
