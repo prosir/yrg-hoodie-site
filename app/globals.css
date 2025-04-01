@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+
+    --primary: 220 92% 55%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220 91% 45%;
+
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220 91% 45%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+
+    --radius: 0.5rem;
+
+    /* Custom colors */
+    --olive-50: 89 43% 97%;
+    --olive-100: 89 39% 93%;
+    --olive-200: 89 39% 86%;
+    --olive-300: 89 39% 76%;
+    --olive-400: 89 39% 66%;
+    --olive-500: 89 39% 56%;
+    --olive-600: 89 39% 46%;
+    --olive-700: 89 39% 36%;
+    --olive-800: 89 39% 26%;
+    --olive-900: 89 39% 16%;
+  }
+
+  .dark {
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 220 92% 55%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 12.2% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.bg-olive-50 {
+  background-color: hsl(var(--olive-50));
+}
+.border-olive-200 {
+  border-color: hsl(var(--olive-200));
+}
+.text-olive-700 {
+  color: hsl(var(--olive-700));
+}
+.text-olive-800 {
+  color: hsl(var(--olive-800));
+}
+
