@@ -76,8 +76,8 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
       return
     }
 
-    // Genereer WhatsApp link met tracking informatie
-    const message = `Hallo ${order.name}, je YoungRidersOost hoodie is verzonden! Je kunt je pakket volgen met het volgende DHL tracking nummer: ${order.trackingNumber}. Volg je pakket hier: https://www.dhlparcel.nl/nl/particulier/ontvangen/track-trace?tt=${order.trackingNumber}`
+    // Genereer WhatsApp link met tracking informatie voor Vinted GO
+    const message = `Hallo ${order.name}, je YoungRidersOost hoodie is verzonden! We hebben het dichtsbijzijnde pakketpunt geselecteerd en je pakket is ook verzekerd. Je kunt je pakket volgen met het volgende Vinted GO tracking nummer: ${order.trackingNumber}. Volg je pakket hier: https://vintedgo.com/nl/tracking/${order.trackingNumber}`
     const whatsappUrl = `https://wa.me/31${order.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(message)}`
 
     // Open WhatsApp in een nieuw tabblad
@@ -101,8 +101,8 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>DHL Tracking Toevoegen</DialogTitle>
-          <DialogDescription>Voeg een DHL tracking nummer toe voor bestelling {order.id}</DialogDescription>
+          <DialogTitle>Vinted GO Tracking Toevoegen</DialogTitle>
+          <DialogDescription>Voeg een Vinted GO tracking nummer toe voor bestelling {order.id}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
@@ -115,7 +115,7 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
                 id="tracking"
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
-                placeholder="DHL tracking nummer"
+                placeholder="Vinted GO tracking nummer"
                 className="col-span-3"
               />
             </div>
@@ -124,12 +124,12 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
               <div className="bg-secondary/30 p-3 rounded-md text-sm">
                 <p className="font-medium">Tracking link:</p>
                 <a
-                  href={`https://www.dhlparcel.nl/nl/particulier/ontvangen/track-trace?tt=${order.trackingNumber}`}
+                  href={`https://vintedgo.com/nl/tracking/${order.trackingNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary underline break-all"
                 >
-                  https://www.dhlparcel.nl/nl/particulier/ontvangen/track-trace?tt={order.trackingNumber}
+                  https://vintedgo.com/nl/tracking/{order.trackingNumber}
                 </a>
                 <p className="mt-2 text-muted-foreground">
                   {order.trackingSent
@@ -143,11 +143,11 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             {order.trackingNumber && (
               <Button type="button" variant="secondary" onClick={handleSendTracking} className="w-full sm:w-auto">
-                Verstuur via WhatsApp
+                Verstuur Vinted GO tracking via WhatsApp
               </Button>
             )}
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-              {isSubmitting ? "Opslaan..." : "Tracking Opslaan"}
+                          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+              {isSubmitting ? "Opslaan..." : "Vinted GO Tracking Opslaan"}
             </Button>
           </DialogFooter>
         </form>
@@ -155,4 +155,3 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
     </Dialog>
   )
 }
-

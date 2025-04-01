@@ -710,7 +710,7 @@ export default function AdminPage() {
                                       onClick={() => openTrackingDialog(order)}
                                     >
                                       <Truck className="h-4 w-4 mr-1" />
-                                      {order.trackingNumber ? "Tracking" : "DHL"}
+                                      {order.trackingNumber ? "Tracking" : "VintedGO"}
                                     </Button>
                                   </>
                                 ) : (
