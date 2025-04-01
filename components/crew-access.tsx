@@ -96,7 +96,7 @@ export default function CrewAccess() {
   }, [isLoading])
 
   function onAccessSubmit(values: z.infer<typeof accessSchema>) {
-    if (values.accessCode === "2025-crew-jacco") {
+    if (values.accessCode === "2025-crew-youngridersoost-cfxo") {
       setAccessGranted(true)
     } else {
       accessForm.setError("accessCode", {
@@ -264,7 +264,7 @@ export default function CrewAccess() {
         <div className="mt-4 mb-6 bg-olive-50 p-4 rounded-lg border border-olive-200">
           <h3 className="text-lg font-semibold mb-2 text-olive-800">Crew Hoodie - Olive</h3>
           <div className="relative h-64 bg-olive-50/50 rounded-md overflow-hidden mb-3">
-            <Image src="/placeholder.svg?height=400&width=400" alt="Olive Crew Hoodie" fill className="object-cover" />
+            <Image src="/olive.jpeg?height=400&width=400" alt="Olive Crew Hoodie" fill className="object-cover" />
           </div>
           <p className="text-olive-700">
             De exclusieve Olive hoodie is alleen beschikbaar voor crew leden en heeft het YoungRidersOost logo.
