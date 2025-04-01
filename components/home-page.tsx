@@ -56,7 +56,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
             <div className="h-64 bg-secondary/30 relative overflow-hidden">
-              <Image src="/placeholder.svg?height=400&width=400" alt="Lilac Hoodie" fill className="object-cover" />
+              <Image src="/lilac.jpeg?height=400&width=400" alt="Lilac Hoodie" fill className="object-cover" />
             </div>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold text-foreground">Lilac</h3>
@@ -67,7 +67,7 @@ export default function HomePage() {
           <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
             <div className="h-64 bg-secondary/30 relative overflow-hidden">
               <Image
-                src="/placeholder.svg?height=400&width=400"
+                src="/Blue_ocean.jpeg?height=400&width=400"
                 alt="Ocean Blue Hoodie"
                 fill
                 className="object-cover"
@@ -81,7 +81,7 @@ export default function HomePage() {
 
           <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
             <div className="h-64 bg-secondary/30 relative overflow-hidden">
-              <Image src="/placeholder.svg?height=400&width=400" alt="Burgundy Hoodie" fill className="object-cover" />
+              <Image src="/red.jpeg?height=400&width=400" alt="Burgundy Hoodie" fill className="object-cover" />
             </div>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold text-foreground">Burgundy</h3>
@@ -91,7 +91,7 @@ export default function HomePage() {
 
           <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
             <div className="h-64 bg-secondary/30 relative overflow-hidden">
-              <Image src="/placeholder.svg?height=400&width=400" alt="Black Hoodie" fill className="object-cover" />
+              <Image src="/zwart.jpeg?height=400&width=400" alt="Black Hoodie" fill className="object-cover" />
             </div>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold text-foreground">Zwart</h3>
