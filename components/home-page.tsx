@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import OrderForm from "@/components/order-form"
 import CrewAccess from "@/components/crew-access"
-import Link from "next/link"
 import { initDatabase } from "@/lib/db"
 
 export default function HomePage() {

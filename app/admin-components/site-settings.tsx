@@ -9,8 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Settings, ShieldAlert, NavigationOffIcon as ShoppingCartOff, CheckCircle, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
-import { getSiteConfig, setMaintenanceMode, setShopClosed, updateMaintenancePassword } from "@/lib/site-config"
-import type { SiteConfig } from "@/lib/site-config"
+
+// Type voor site configuratie
+type SiteConfig = {
+  maintenanceMode: boolean
+  shopClosed: boolean
+  maintenancePassword?: string
+}
 
 export function SiteSettings() {
   const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null)
@@ -19,10 +24,29 @@ export function SiteSettings() {
   const [newPassword, setNewPassword] = useState("")
   const [passwordChanged, setPasswordChanged] = useState(false)
 
+  // Laad de instellingen bij het laden van de component
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const config = await getSiteConfig()
+        setLoading(true)
+
+        // Haal de instellingen op van de API
+        const response = await fetch("/api/admin/site-settings")
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const config = await response.json()
+
+        // Haal het opgeslagen wachtwoord op uit localStorage (als het bestaat)
+        const savedPassword = localStorage.getItem("maintenance_password")
+        if (savedPassword) {
+          config.maintenancePassword = savedPassword
+        } else {
+          config.maintenancePassword = "youngriders2025" // Standaard wachtwoord
+        }
+
         setSiteConfig(config)
       } catch (error) {
         console.error("Failed to load site configuration:", error)
@@ -39,14 +63,36 @@ export function SiteSettings() {
     loadConfig()
   }, [])
 
+  // Functie om de onderhoudsmodus in/uit te schakelen
   const handleMaintenanceToggle = async (checked: boolean) => {
     if (!siteConfig) return
 
     try {
       setUpdating(true)
 
-      const updatedConfig = await setMaintenanceMode(checked)
-      setSiteConfig(updatedConfig)
+      // Update de API
+      const response = await fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "setMaintenanceMode",
+          value: checked,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const updatedConfig = await response.json()
+
+      // Update de lokale state
+      setSiteConfig((prev) => ({
+        ...prev!,
+        maintenanceMode: checked,
+      }))
 
       toast({
         title: checked ? "Onderhoudsmodus ingeschakeld" : "Onderhoudsmodus uitgeschakeld",
@@ -66,14 +112,36 @@ export function SiteSettings() {
     }
   }
 
+  // Functie om de webshop te sluiten/openen
   const handleShopClosedToggle = async (checked: boolean) => {
     if (!siteConfig) return
 
     try {
       setUpdating(true)
 
-      const updatedConfig = await setShopClosed(checked)
-      setSiteConfig(updatedConfig)
+      // Update de API
+      const response = await fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "setShopClosed",
+          value: checked,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const updatedConfig = await response.json()
+
+      // Update de lokale state
+      setSiteConfig((prev) => ({
+        ...prev!,
+        shopClosed: checked,
+      }))
 
       toast({
         title: checked ? "Webshop gesloten" : "Webshop geopend",
@@ -93,14 +161,38 @@ export function SiteSettings() {
     }
   }
 
+  // Functie om het onderhoudswachtwoord bij te werken
   const handlePasswordUpdate = async () => {
     if (!siteConfig || !newPassword) return
 
     try {
       setUpdating(true)
 
-      const updatedConfig = await updateMaintenancePassword(newPassword)
-      setSiteConfig(updatedConfig)
+      // Update de API
+      const response = await fetch("/api/admin/site-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "updateMaintenancePassword",
+          value: newPassword,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Sla het wachtwoord op in localStorage
+      localStorage.setItem("maintenance_password", newPassword)
+
+      // Update de lokale state
+      setSiteConfig((prev) => ({
+        ...prev!,
+        maintenancePassword: newPassword,
+      }))
+
       setPasswordChanged(true)
       setNewPassword("")
 

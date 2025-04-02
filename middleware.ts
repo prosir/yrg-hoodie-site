@@ -1,8 +1,38 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-// Eenvoudige middleware die alleen controleert of we naar de admin, api, maintenance of shop-closed routes gaan
 export function middleware(request: NextRequest) {
-  // Laat alle requests gewoon door
+  // Get the pathname from the URL
+  const pathname = request.nextUrl.pathname
+
+  // Check if the path is an admin route
+  if (pathname.startsWith("/admin")) {
+    // Skip auth check for the admin login page itself
+    if (pathname === "/admin") {
+      return NextResponse.next()
+    }
+
+    // Check for admin authentication cookie
+    const adminSessionCookie = request.cookies.get("admin_session")
+
+    // If no admin session cookie or it's not valid, redirect to admin login
+    if (!adminSessionCookie || adminSessionCookie.value !== "authenticated") {
+      const url = new URL("/admin", request.url)
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Check if we need to handle maintenance mode
+  if (!pathname.startsWith("/admin") && !pathname.startsWith("/maintenance") && !pathname.startsWith("/_next")) {
+    // Check for maintenance mode bypass
+    const bypassCookie = request.cookies.get("maintenance_bypass")
+
+    // Check the site config API to see if site is in maintenance mode
+    // For simplicity in the middleware, we'll just check the cookie here
+    // In a production app, you might want to use a more robust solution
+    // like a cache or fast database check
+  }
+
+  // Allow the request to continue
   return NextResponse.next()
 }
 
@@ -17,6 +47,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }
-
-
 

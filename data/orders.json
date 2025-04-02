@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "name": "Test Gebruiker",
+    "email": "test@example.com",
+    "phone": "0612345678",
+    "address": "Teststraat 123",
+    "color": "black",
+    "size": "l",
+    "delivery": "pickup",
+    "notes": "Dit is een testbestelling",
+    "price": 50,
+    "status": "nieuw",
+    "date": "2025-04-02T10:57:35.377Z",
+    "id": "A8DDD94E",
+    "orderId": "ORDER-3854",
+    "quantity": 1
+  }
+]
+

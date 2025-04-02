@@ -1,11 +1,17 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { getSiteConfig } from "@/lib/site-config"
-import HomePage from "@/components/home-page"
+import { ProductsPage } from "@/components/products-page"
 
 export default async function Home() {
-  // Haal de site configuratie op
-  const config = await getSiteConfig()
+  // Haal de site configuratie op via de API
+  const response = await fetch(
+    `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/api/site-status`,
+    {
+      cache: "no-store",
+    },
+  )
+
+  const config = await response.json()
 
   // Controleer of we in onderhoudsmodus zijn
   if (config.maintenanceMode) {
@@ -24,7 +30,7 @@ export default async function Home() {
     redirect("/shop-closed")
   }
 
-  // Toon de normale homepage als we hier komen
-  return <HomePage />
+  // Toon de producten pagina als we hier komen
+  return <ProductsPage />
 }
 

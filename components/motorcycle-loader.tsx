@@ -19,10 +19,10 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
       if (progress >= 1) {
         // Begin met het fade-in effect van de bedankboodschap
         setShowThanks(true)
-        
+
         // Fade-in effect voor de bedankboodschap
         const fadeInInterval = setInterval(() => {
-          setThanksOpacity(prev => {
+          setThanksOpacity((prev) => {
             const newOpacity = Math.min(1, prev + 0.05)
             if (newOpacity >= 1) {
               clearInterval(fadeInInterval)
@@ -36,7 +36,7 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
             return newOpacity
           })
         }, 50)
-        
+
         return () => {
           clearInterval(fadeInInterval)
         }
@@ -69,7 +69,7 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
           {/* Asfaltweg met middenstreep */}
           <div className="absolute bottom-0 w-full h-12 bg-gray-700">
             {/* Middenstreep van de weg */}
-            <div 
+            <div
               className="absolute top-6 left-0 w-[400%] h-1 flex items-center transition-transform duration-500 ease-linear"
               style={{ transform: `translateX(-${progress * 60}%)` }}
             >
@@ -78,10 +78,10 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
               ))}
             </div>
           </div>
-          
+
           {/* Dankboodschap die fade-in doet als progress = 100% */}
           {showThanks && (
-            <div 
+            <div
               className="absolute inset-0 flex items-center justify-center transition-opacity duration-500"
               style={{ opacity: thanksOpacity }}
             >
@@ -106,3 +106,4 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
     </div>
   )
 }
+

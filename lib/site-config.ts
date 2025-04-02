@@ -39,62 +39,82 @@ async function ensureConfig() {
 
 // Get current site configuration
 export async function getSiteConfig(): Promise<SiteConfig> {
-  await ensureConfig()
-
   try {
-    const data = await fs.readFile(CONFIG_FILE, "utf8")
-    return JSON.parse(data)
+    await ensureConfig()
+
+    try {
+      const data = await fs.readFile(CONFIG_FILE, "utf8")
+      return JSON.parse(data)
+    } catch (error) {
+      console.error("Error reading site config:", error)
+      return DEFAULT_CONFIG
+    }
   } catch (error) {
-    console.error("Error reading site config:", error)
+    console.error("Error ensuring config directory:", error)
     return DEFAULT_CONFIG
   }
 }
 
 // Set site maintenance mode
 export async function setMaintenanceMode(enabled: boolean): Promise<SiteConfig> {
-  await ensureConfig()
-
   try {
-    const config = await getSiteConfig()
-    const updatedConfig = { ...config, maintenanceMode: enabled }
+    await ensureConfig()
 
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-    return updatedConfig
+    try {
+      const config = await getSiteConfig()
+      const updatedConfig = { ...config, maintenanceMode: enabled }
+
+      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
+      return updatedConfig
+    } catch (error) {
+      console.error("Error setting maintenance mode:", error)
+      throw new Error("Failed to update site configuration")
+    }
   } catch (error) {
-    console.error("Error setting maintenance mode:", error)
-    throw new Error("Failed to update site configuration")
+    console.error("Error ensuring config directory:", error)
+    throw new Error("Failed to access configuration directory")
   }
 }
 
 // Set shop closed status
 export async function setShopClosed(closed: boolean): Promise<SiteConfig> {
-  await ensureConfig()
-
   try {
-    const config = await getSiteConfig()
-    const updatedConfig = { ...config, shopClosed: closed }
+    await ensureConfig()
 
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-    return updatedConfig
+    try {
+      const config = await getSiteConfig()
+      const updatedConfig = { ...config, shopClosed: closed }
+
+      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
+      return updatedConfig
+    } catch (error) {
+      console.error("Error setting shop closed status:", error)
+      throw new Error("Failed to update site configuration")
+    }
   } catch (error) {
-    console.error("Error setting shop closed status:", error)
-    throw new Error("Failed to update site configuration")
+    console.error("Error ensuring config directory:", error)
+    throw new Error("Failed to access configuration directory")
   }
 }
 
 // Update maintenance password
 export async function updateMaintenancePassword(password: string): Promise<SiteConfig> {
-  await ensureConfig()
-
   try {
-    const config = await getSiteConfig()
-    const updatedConfig = { ...config, maintenancePassword: password }
+    await ensureConfig()
 
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-    return updatedConfig
+    try {
+      const config = await getSiteConfig()
+      const updatedConfig = { ...config, maintenancePassword: password }
+
+      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
+      return updatedConfig
+    } catch (error) {
+      console.error("Error updating maintenance password:", error)
+      throw new Error("Failed to update maintenance password")
+    }
   } catch (error) {
-    console.error("Error updating maintenance password:", error)
-    throw new Error("Failed to update maintenance password")
+    console.error("Error ensuring config directory:", error)
+    throw new Error("Failed to access configuration directory")
   }
 }
 

@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { updateTrackingNumber, markTrackingAsSent } from "@/lib/db"
 import type { Order } from "@/lib/db"
+import { ExternalLink } from "lucide-react"
 
 interface TrackingDialogProps {
   order: Order
@@ -97,6 +98,12 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
       })
   }
 
+  const openTrackingPage = () => {
+    if (order.trackingNumber) {
+      window.open(`https://vintedgo.com/nl/tracking/${order.trackingNumber}`, "_blank")
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -123,14 +130,19 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
             {order.trackingNumber && (
               <div className="bg-secondary/30 p-3 rounded-md text-sm">
                 <p className="font-medium">Tracking link:</p>
-                <a
-                  href={`https://vintedgo.com/nl/tracking/${order.trackingNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline break-all"
-                >
-                  https://vintedgo.com/nl/tracking/{order.trackingNumber}
-                </a>
+                <div className="flex items-center justify-between mt-1">
+                  <a
+                    href={`https://vintedgo.com/nl/tracking/${order.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline break-all"
+                  >
+                    https://vintedgo.com/nl/tracking/{order.trackingNumber}
+                  </a>
+                  <Button variant="ghost" size="sm" onClick={openTrackingPage} className="ml-2 flex-shrink-0">
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
                 <p className="mt-2 text-muted-foreground">
                   {order.trackingSent
                     ? "✓ Tracking informatie is al verstuurd via WhatsApp"
@@ -146,12 +158,19 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
                 Verstuur Vinted GO tracking via WhatsApp
               </Button>
             )}
-                          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
               {isSubmitting ? "Opslaan..." : "Vinted GO Tracking Opslaan"}
             </Button>
+            {order.trackingNumber && (
+              <Button type="button" variant="outline" onClick={openTrackingPage} className="w-full sm:w-auto">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Ga naar tracking pagina
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   )
 }
+

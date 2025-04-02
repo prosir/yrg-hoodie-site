@@ -19,43 +19,48 @@ import { addOrder } from "@/lib/db"
 import { MotorcycleLoader } from "@/components/motorcycle-loader"
 import Image from "next/image"
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Naam moet minimaal 2 tekens bevatten.",
-  }),
-  email: z.string().email({
-    message: "Voer een geldig e-mailadres in.",
-  }),
-  phone: z.string().min(10, {
-    message: "Voer een geldig telefoonnummer in.",
-  }),
-  street: z.string().optional(),
-  houseNumber: z.string().optional(),
-  postalCode: z.string().optional(),
-  city: z.string().optional(),
-  color: z.string({
-    required_error: "Selecteer een kleur.",
-  }),
-  size: z.string({
-    required_error: "Selecteer een maat.",
-  }),
-  delivery: z.enum(["pickup", "shipping"], {
-    required_error: "Selecteer een bezorgmethode.",
-  }),
-  notes: z.string().optional(),
-  termsAccepted: z.boolean().refine(val => val === true, {
-    message: "Je moet akkoord gaan met de voorwaarden om te bestellen.",
+const formSchema = z
+  .object({
+    name: z.string().min(2, {
+      message: "Naam moet minimaal 2 tekens bevatten.",
+    }),
+    email: z.string().email({
+      message: "Voer een geldig e-mailadres in.",
+    }),
+    phone: z.string().min(10, {
+      message: "Voer een geldig telefoonnummer in.",
+    }),
+    street: z.string().optional(),
+    houseNumber: z.string().optional(),
+    postalCode: z.string().optional(),
+    city: z.string().optional(),
+    color: z.string({
+      required_error: "Selecteer een kleur.",
+    }),
+    size: z.string({
+      required_error: "Selecteer een maat.",
+    }),
+    delivery: z.enum(["pickup", "shipping"], {
+      required_error: "Selecteer een bezorgmethode.",
+    }),
+    notes: z.string().optional(),
+    termsAccepted: z.boolean().refine((val) => val === true, {
+      message: "Je moet akkoord gaan met de voorwaarden om te bestellen.",
+    }),
   })
-}).refine((data) => {
-  // Als verzenden is geselecteerd, controleer of alle adresvelden zijn ingevuld
-  if (data.delivery === "shipping") {
-    return !!data.street && !!data.houseNumber && !!data.postalCode && !!data.city;
-  }
-  return true;
-}, {
-  message: "Vul alle adresgegevens in voor verzending",
-  path: ["delivery"],
-});
+  .refine(
+    (data) => {
+      // Als verzenden is geselecteerd, controleer of alle adresvelden zijn ingevuld
+      if (data.delivery === "shipping") {
+        return !!data.street && !!data.houseNumber && !!data.postalCode && !!data.city
+      }
+      return true
+    },
+    {
+      message: "Vul alle adresgegevens in voor verzending",
+      path: ["delivery"],
+    },
+  )
 
 export default function OrderForm() {
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -118,10 +123,10 @@ export default function OrderForm() {
     const finalPrice = values.delivery === "shipping" ? basePrice + shippingCost : basePrice
 
     // Create order object with formatted address
-    let formattedAddress = "Ophalen";
-    
+    let formattedAddress = "Ophalen"
+
     if (values.delivery === "shipping") {
-      formattedAddress = `${values.street} ${values.houseNumber}, ${values.postalCode} ${values.city}`;
+      formattedAddress = `${values.street} ${values.houseNumber}, ${values.postalCode} ${values.city}`
     }
 
     const orderData = {
@@ -305,10 +310,10 @@ export default function OrderForm() {
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
                     Maat
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={toggleSizeChart}
                       className="h-6 w-6 p-0 rounded-full"
                     >
@@ -345,16 +350,11 @@ export default function OrderForm() {
             <div className="rounded-md border p-4 mt-2 mb-4">
               <h3 className="text-lg font-medium mb-3">Maattabel YoungRidersOost Hoodies</h3>
               <div className="relative h-72 bg-background rounded-md overflow-hidden">
-                <Image 
-                  src="/size-chart.jpg" 
-                  alt="Maattabel voor hoodies" 
-                  fill 
-                  className="object-contain" 
-                />
+                <Image src="/size-chart.jpg" alt="Maattabel voor hoodies" fill className="object-contain" />
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                Tip: Voor normaal gebruik, neem één maat groter dan je gebruikelijke maat. 
-                Voor over motorkleding, neem twee maten groter.
+                Tip: Voor normaal gebruik, neem één maat groter dan je gebruikelijke maat. Voor over motorkleding, neem
+                twee maten groter.
               </p>
             </div>
           )}
@@ -378,7 +378,8 @@ export default function OrderForm() {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="shipping" id="shipping" />
                       <Label htmlFor="shipping">
-                        Verzending via Vinted GO (+€{shippingCost.toFixed(2)}) - Totaal €{(basePrice + shippingCost).toFixed(2)}
+                        Verzending via Vinted GO (+€{shippingCost.toFixed(2)}) - Totaal €
+                        {(basePrice + shippingCost).toFixed(2)}
                       </Label>
                     </div>
                   </RadioGroup>
@@ -456,7 +457,9 @@ export default function OrderForm() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Informatie over verzending</AlertTitle>
             <AlertDescription>
-              <p className="mb-1">Bij verzending wordt je pakket verzonden via Vinted GO naar het dichtstbijzijnde pakketpunt.</p>
+              <p className="mb-1">
+                Bij verzending wordt je pakket verzonden via Vinted GO naar het dichtstbijzijnde pakketpunt.
+              </p>
               <p>Je pakket is verzekerd en je ontvangt een track & trace code zodra het onderweg is.</p>
             </AlertDescription>
           </Alert>
@@ -485,22 +488,17 @@ export default function OrderForm() {
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                 <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="terms"
-                    required
-                  />
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} id="terms" required />
                 </FormControl>
                 <div className="space-y-1 leading-none">
                   <FormLabel htmlFor="terms" className="font-medium text-foreground">
                     Ik ga akkoord met de voorwaarden (verplicht)
                   </FormLabel>
                   <FormDescription>
-                    Ik begrijp dat dit geen officiële webshop is maar een groepsbestelling voor de YoungRidersOost community. 
-                    Er geldt geen retourrecht, geen omruilgarantie en geen andere garantievoorwaarden conform artikel 7:5 lid 5 BW
-                    (Burgerlijk Wetboek) dat vrijstelling biedt voor particuliere verkoop en niet-commerciële verkoop.
-                    Alle verkopen zijn finaal en YoungRidersOost is geen bedrijf.
+                    Ik begrijp dat dit geen officiële webshop is maar een groepsbestelling voor de YoungRidersOost
+                    community. Er geldt geen retourrecht, geen omruilgarantie en geen andere garantievoorwaarden conform
+                    artikel 7:5 lid 5 BW (Burgerlijk Wetboek) dat vrijstelling biedt voor particuliere verkoop en
+                    niet-commerciële verkoop. Alle verkopen zijn finaal en YoungRidersOost is geen bedrijf.
                   </FormDescription>
                 </div>
                 <FormMessage />
@@ -525,3 +523,4 @@ export default function OrderForm() {
     </>
   )
 }
+

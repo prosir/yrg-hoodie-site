@@ -15,19 +15,20 @@ import {
   Copy,
   Check,
   Printer,
-  FileText,
   ShoppingBag,
-  Truck,
   Settings,
   ShieldAlert,
   NavigationOffIcon as ShoppingCartOff,
+  ExternalLink,
+  Package,
+  CreditCard,
 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { getAllOrders, updateOrder } from "@/lib/db"
+import { getAllOrders, updateOrder, updateOrderStatus } from "@/lib/db"
 import type { Order } from "@/lib/db"
-import { TrackingDialog } from "@/components/tracking-dialog"
 import Link from "next/link"
 import { PrintTable } from "@/components/print-table"
+import { useRouter } from "next/navigation"
 
 // Type voor gegroepeerde bestellingen
 type GroupedOrder = {
@@ -51,8 +52,28 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("orders")
   const [groupedOrders, setGroupedOrders] = useState<GroupedOrder[]>([])
   const printRef = useRef<HTMLDivElement>(null)
-  const [trackingDialogOpen, setTrackingDialogOpen] = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+  const router = useRouter()
+
+  // Check if already logged in via session cookie
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/admin/check-session")
+        const data = await response.json()
+
+        if (data.authenticated) {
+          setIsLoggedIn(true)
+        }
+      } catch (error) {
+        console.error("Error checking session:", error)
+      } finally {
+        setCheckingSession(false)
+      }
+    }
+
+    checkSession()
+  }, [])
 
   // Load orders from server
   useEffect(() => {
@@ -92,6 +113,7 @@ export default function AdminPage() {
 
     paidOrders.forEach((order) => {
       const key = `${order.color}-${order.size}-${order.isCrew ? "crew" : "regular"}`
+      const quantity = order.quantity || 1
 
       if (!grouped[key]) {
         grouped[key] = {
@@ -102,7 +124,8 @@ export default function AdminPage() {
         }
       }
 
-      grouped[key].count += 1
+      // Voeg de quantity toe in plaats van altijd 1
+      grouped[key].count += quantity
     })
 
     // Converteer naar array en sorteer
@@ -132,6 +155,7 @@ export default function AdminPage() {
       result = result.filter(
         (order) =>
           order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.phone.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -146,19 +170,54 @@ export default function AdminPage() {
   }, [orders, searchTerm, statusFilter])
 
   // Handle login
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simple admin authentication - in a real app, this would be handled securely on the server
-    if (username === "admin" && password === "youngriders2025") {
-      setIsLoggedIn(true)
+
+    try {
       setLoginError("")
-    } else {
-      setLoginError("Ongeldige inloggegevens")
+
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setIsLoggedIn(true)
+      } else {
+        setLoginError("Ongeldige inloggegevens")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setLoginError("Er is een fout opgetreden bij het inloggen")
+    }
+  }
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+      })
+
+      setIsLoggedIn(false)
+      router.push("/admin")
+    } catch (error) {
+      console.error("Logout error:", error)
+      toast({
+        title: "Fout bij uitloggen",
+        description: "Er is een fout opgetreden bij het uitloggen.",
+        variant: "destructive",
+      })
     }
   }
 
   // Update order status
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const orderToUpdate = orders.find((order) => order.id === orderId)
 
@@ -197,6 +256,38 @@ export default function AdminPage() {
     }
   }
 
+  // Update status voor alle bestellingen met hetzelfde orderId
+  const handleUpdateOrderGroupStatus = async (orderId: string, newStatus: string) => {
+    try {
+      // Update via server action
+      await updateOrderStatus(orderId, newStatus)
+
+      // Update local state
+      const updatedOrders = orders.map((order) => {
+        if (order.orderId === orderId) {
+          return { ...order, status: newStatus }
+        }
+        return order
+      })
+
+      setOrders(updatedOrders)
+      setFilteredOrders(updatedOrders.filter((order) => statusFilter === "all" || order.status === statusFilter))
+      groupOrdersBySizeAndColor(updatedOrders)
+
+      toast({
+        title: "Status bijgewerkt",
+        description: `Alle bestellingen met ordernummer ${orderId} zijn bijgewerkt naar ${newStatus}.`,
+      })
+    } catch (error) {
+      console.error("Failed to update order group status:", error)
+      toast({
+        title: "Fout bij bijwerken",
+        description: "Er is een fout opgetreden bij het bijwerken van de status.",
+        variant: "destructive",
+      })
+    }
+  }
+
   // Markeer bestelling als besteld bij leverancier
   const markAsOrderedFromSupplier = async (orderId: string) => {
     try {
@@ -206,6 +297,7 @@ export default function AdminPage() {
         const updatedOrder = {
           ...orderToUpdate,
           orderedFromSupplier: !orderToUpdate.orderedFromSupplier,
+          status: !orderToUpdate.orderedFromSupplier ? "besteld" : orderToUpdate.status,
         }
 
         // Update via server action
@@ -233,18 +325,51 @@ export default function AdminPage() {
     }
   }
 
-  // Open tracking dialog
-  const openTrackingDialog = (order: Order) => {
-    setSelectedOrder(order)
-    setTrackingDialogOpen(true)
-  }
+  // Markeer alle bestellingen met hetzelfde orderId als besteld bij leverancier
+  const markOrderGroupAsOrderedFromSupplier = async (orderId: string) => {
+    try {
+      // Haal alle bestellingen op met dit orderId
+      const orderGroup = orders.filter((order) => order.orderId === orderId)
 
-  // Handle tracking update success
-  const handleTrackingSuccess = (updatedOrder: Order) => {
-    // Update orders array with the updated order
-    const updatedOrders = orders.map((order) => (order.id === updatedOrder.id ? updatedOrder : order))
-    setOrders(updatedOrders)
-    setFilteredOrders(updatedOrders.filter((order) => statusFilter === "all" || order.status === statusFilter))
+      // Update elke bestelling in de groep
+      for (const order of orderGroup) {
+        const updatedOrder = {
+          ...order,
+          orderedFromSupplier: true,
+          status: "besteld",
+        }
+
+        // Update via server action
+        await updateOrder(updatedOrder)
+      }
+
+      // Update local state
+      const updatedOrders = orders.map((order) => {
+        if (order.orderId === orderId) {
+          return {
+            ...order,
+            orderedFromSupplier: true,
+            status: "besteld",
+          }
+        }
+        return order
+      })
+
+      setOrders(updatedOrders)
+      setFilteredOrders(updatedOrders.filter((order) => statusFilter === "all" || order.status === statusFilter))
+
+      toast({
+        title: "Besteld bij leverancier",
+        description: `Alle bestellingen met ordernummer ${orderId} zijn gemarkeerd als besteld bij leverancier.`,
+      })
+    } catch (error) {
+      console.error("Failed to update supplier order status for group:", error)
+      toast({
+        title: "Fout bij bijwerken",
+        description: "Er is een fout opgetreden bij het bijwerken van de leveranciersstatus.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Format date
@@ -278,171 +403,214 @@ export default function AdminPage() {
       const originalContents = document.body.innerHTML
 
       document.body.innerHTML = `
-      <html>
-        <head>
-          <title>YoungRidersOost Bestellijst</title>
-          <style>
-            @media print {
-              @page {
-                size: A4;
-                margin: 1.5cm;
-              }
+    <html>
+      <head>
+        <title>YoungRidersOost Bestellijst</title>
+        <style>
+          @media print {
+            @page {
+              size: A4;
+              margin: 1.5cm;
+            }
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.5;
+          }
+          
+          .print-container {
+            max-width: 100%;
+            margin: 0 auto;
+          }
+          
+          .print-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #1e40af;
+          }
+          
+          .logo {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 5px;
+          }
+          
+          .subtitle {
+            font-size: 16px;
+            color: #666;
+          }
+          
+          h1 {
+            font-size: 22px;
+            color: #1e40af;
+            text-align: center;
+            margin: 20px 0;
+          }
+          
+          h2 {
+            font-size: 18px;
+            color: #1e40af;
+            margin: 15px 0;
+          }
+          
+          h3 {
+            font-size: 16px;
+            color: #1e40af;
+            margin: 10px 0;
+          }
+          
+          .summary-info {
+            background-color: #f5f7ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #dde5fd;
+          }
+          
+          .summary-info p {
+            margin: 5px 0;
+            font-size: 14px;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+          }
+          
+          th {
+            background-color: #f0f4ff;
+            color: #1e40af;
+            font-weight: bold;
+            text-align: left;
+            padding: 10px;
+            border: 1px solid #dde5fd;
+          }
+          
+          td {
+            padding: 10px;
+            border: 1px solid #dde5fd;
+            vertical-align: top;
+          }
+          
+          tr:nth-child(even) {
+            background-color: #f9faff;
+          }
+          
+          .crew-row {
+            background-color: #effaf0;
+          }
+          
+          .table-footer {
+            background-color: #f0f4ff;
+            font-weight: bold;
+          }
+          
+          .totals {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f7ff;
+            border: 1px solid #dde5fd;
+            border-radius: 6px;
+          }
+          
+          .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+          }
+          
+          .grid > div {
+            background-color: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #dde5fd;
+            text-align: center;
+          }
+          
+          .uppercase {
+            text-transform: uppercase;
+            font-size: 12px;
+            color: #666;
+          }
+          
+          .text-3xl {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e40af;
+            margin: 5px 0;
+          }
+          
+          .text-green-600 {
+            color: #059669;
+          }
+          
+          .text-xs {
+            font-size: 11px;
+            color: #999;
+          }
+          
+          .print-footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #dde5fd;
+            padding-top: 20px;
+          }
+          
+          .print-date {
+            font-style: italic;
+            margin-top: 10px;
+          }
+          
+          /* Hide all shadow effects when printing */
+          @media print {
+            .shadow-sm, .shadow, .shadow-md, .shadow-lg {
+              box-shadow: none !important;
             }
             
-            body {
-              font-family: Arial, sans-serif;
-              color: #333;
-              line-height: 1.5;
-            }
-            
-            .print-container {
-              max-width: 100%;
-              margin: 0 auto;
-            }
-            
-            .print-header {
-              text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 2px solid #1e40af;
-            }
-            
-            .logo {
-              font-size: 26px;
-              font-weight: bold;
-              color: #1e40af;
-              margin-bottom: 5px;
-            }
-            
-            .subtitle {
-              font-size: 16px;
-              color: #666;
-            }
-            
-            h1 {
-              font-size: 22px;
-              color: #1e40af;
-              text-align: center;
-              margin: 20px 0;
-            }
-            
-            .summary-info {
-              background-color: #f5f7ff;
-              padding: 15px;
-              border-radius: 6px;
-              margin-bottom: 20px;
-              border: 1px solid #dde5fd;
-            }
-            
-            .summary-info p {
-              margin: 5px 0;
-              font-size: 14px;
-            }
-            
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 30px;
-              font-size: 14px;
-            }
-            
-            th {
-              background-color: #f0f4ff;
-              color: #1e40af;
-              font-weight: bold;
-              text-align: left;
-              padding: 10px;
-              border: 1px solid #dde5fd;
-            }
-            
-            td {
-              padding: 10px;
-              border: 1px solid #dde5fd;
-              vertical-align: top;
-            }
-            
-            .crew-row {
-              background-color: #effaf0;
-            }
-            
-            .table-footer {
-              background-color: #f0f4ff;
-              font-weight: bold;
+            /* Ensure page breaks don't happen in the middle of items */
+            tr {
+              page-break-inside: avoid;
             }
             
             .totals {
-              margin-top: 20px;
-              border-top: 1px solid #dde5fd;
-              padding-top: 10px;
+              page-break-inside: avoid;
             }
-            
-            .totals-table {
-              width: 60%;
-              margin: 0 0 0 auto;
-              border-collapse: collapse;
-            }
-            
-            .totals-table td {
-              padding: 8px;
-              border: 1px solid #dde5fd;
-            }
-            
-            .totals-table td:first-child {
-              text-align: right;
-              font-weight: bold;
-              width: 70%;
-            }
-            
-            .totals-table td:last-child {
-              text-align: center;
-              width: 30%;
-            }
-            
-            .print-footer {
-              margin-top: 40px;
-              font-size: 12px;
-              color: #666;
-              text-align: center;
-              border-top: 1px solid #dde5fd;
-              padding-top: 20px;
-            }
-            
-            .print-date {
-              font-style: italic;
-              margin-top: 10px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-container">
-            <div class="print-header">
-              <div class="logo">YoungRidersOost</div>
-              <div class="subtitle">Officiële Merchandise - Bestellijst voor Leverancier</div>
-            </div>
-            
-            <h1>Samenvatting Betaalde Bestellingen</h1>
-            
-            <div class="summary-info">
-              <p>Deze lijst bevat alle betaalde bestellingen gegroepeerd per type, kleur en maat.</p>
-              <p>Gebruik deze lijst om alle benodigde hoodies bij de leverancier te bestellen.</p>
-            </div>
-            
-            ${printContents}
-            
-            <div class="print-footer">
-              <div>YoungRidersOost Bestellijst</div>
-              <div class="print-date">Afgedrukt op: ${new Date().toLocaleDateString("nl-NL", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}</div>
-            </div>
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-container">
+          <div class="print-header">
+            <div class="logo">YoungRidersOost</div>
+            <div class="subtitle">Officiële Merchandise - Bestellijst voor Leverancier</div>
           </div>
-        </body>
-      </html>
-    `
+          
+          <h1>Samenvatting Betaalde Bestellingen</h1>
+          
+          ${printContents}
+          
+          <div class="print-footer">
+            <div>YoungRidersOost Bestellijst</div>
+            <div class="print-date">Afgedrukt op: ${new Date().toLocaleDateString("nl-NL", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}</div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
 
       window.print()
       document.body.innerHTML = originalContents
@@ -472,6 +640,45 @@ export default function AdminPage() {
     }
 
     return colorMap[color] || color
+  }
+
+  // Groepeer bestellingen op orderId
+  const getOrderGroups = () => {
+    const orderGroups: Record<string, Order[]> = {}
+
+    orders.forEach((order) => {
+      if (!orderGroups[order.orderId]) {
+        orderGroups[order.orderId] = []
+      }
+      orderGroups[order.orderId].push(order)
+    })
+
+    // Sorteer op datum (nieuwste eerst)
+    return Object.entries(orderGroups)
+      .map(([orderId, orders]) => {
+        // Tel het totale aantal items op basis van quantity
+        const totalItems = orders.reduce((sum, order) => sum + (order.quantity || 1), 0)
+
+        return {
+          orderId,
+          orders,
+          date: orders[0].date,
+          status: orders[0].status,
+          customer: orders[0].name,
+          totalItems: totalItems,
+          totalPrice: orders.reduce((sum, order) => sum + order.price * (order.quantity || 1), 0),
+        }
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }
+
+  // Show loading state while checking session
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-secondary/20 p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (!isLoggedIn) {
@@ -520,6 +727,7 @@ export default function AdminPage() {
   }
 
   const { totalItems, crewItems, regularItems } = calculateTotals()
+  const orderGroups = getOrderGroups()
 
   return (
     <div className="container mx-auto p-4 py-8">
@@ -530,25 +738,25 @@ export default function AdminPage() {
               <CardTitle>YoungRidersOost Admin Panel</CardTitle>
               <CardDescription>Beheer alle bestellingen</CardDescription>
             </div>
-            <Button onClick={() => setIsLoggedIn(false)} variant="outline">
+            <Button onClick={handleLogout} variant="outline">
               Uitloggen
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="orders" value={activeTab} onValueChange={setActiveTab}>
+          <Tabs defaultValue="order-groups" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
-              <TabsTrigger value="orders" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
+              <TabsTrigger value="order-groups" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
                 Bestellingen
               </TabsTrigger>
               <TabsTrigger value="summary" className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4" />
+                <Package className="h-4 w-4" />
                 Bestellijst
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="orders">
+            <TabsContent value="order-groups">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1">
                   <Input
@@ -566,6 +774,7 @@ export default function AdminPage() {
                       <SelectItem value="all">Alle statussen</SelectItem>
                       <SelectItem value="nieuw">Nieuw</SelectItem>
                       <SelectItem value="betaald">Betaald</SelectItem>
+                      <SelectItem value="besteld">Besteld bij leverancier</SelectItem>
                       <SelectItem value="verzonden">Verzonden</SelectItem>
                       <SelectItem value="afgehaald">Afgehaald</SelectItem>
                       <SelectItem value="geannuleerd">Geannuleerd</SelectItem>
@@ -581,165 +790,129 @@ export default function AdminPage() {
               ) : (
                 <div className="rounded-md border">
                   <Table>
-                    <TableCaption>
-                      Handmatige verwerking van bestellingen - Sturen Tikkies & Verzend Tracking
-                    </TableCaption>
+                    <TableCaption>Bestellingen gegroepeerd op bestelnummer</TableCaption>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[120px]">Order ID</TableHead>
-                        <TableHead className="w-[150px]">Datum</TableHead>
+                        <TableHead>Order ID</TableHead>
                         <TableHead>Klant</TableHead>
-                        <TableHead className="w-[100px]">Telefoon</TableHead>
-                        <TableHead className="w-[100px]">Kleur/Maat</TableHead>
-                        <TableHead className="w-[100px]">Prijs</TableHead>
-                        <TableHead className="w-[150px]">Status</TableHead>
+                        <TableHead>Datum</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Aantal items</TableHead>
+                        <TableHead>Totaalbedrag</TableHead>
                         <TableHead className="text-right">Acties</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredOrders.length > 0 ? (
-                        filteredOrders.map((order) => (
-                          <TableRow key={order.id} className={order.orderedFromSupplier ? "bg-blue-50" : ""}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-1">
-                                <span>{order.id}</span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => copyToClipboard(order.id)}
-                                >
-                                  {copiedId === order.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                                </Button>
-                              </div>
-                            </TableCell>
-                            <TableCell>{formatDate(order.date)}</TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{order.name}</div>
-                                <div className="text-sm text-muted-foreground">{order.email}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {order.delivery === "pickup" ? "Ophalen" : "Verzenden"}
-                                  {order.address && `: ${order.address}`}
+                      {orderGroups.length > 0 ? (
+                        orderGroups
+                          .filter(
+                            (group) =>
+                              statusFilter === "all" ||
+                              group.status === statusFilter ||
+                              group.orders.some((order) => order.status === statusFilter),
+                          )
+                          .filter(
+                            (group) =>
+                              !searchTerm ||
+                              group.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              group.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              group.orders.some(
+                                (order) =>
+                                  order.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  order.phone.toLowerCase().includes(searchTerm.toLowerCase()),
+                              ),
+                          )
+                          .map((group) => (
+                            <TableRow key={group.orderId}>
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-1">
+                                  <span>{group.orderId}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => copyToClipboard(group.orderId)}
+                                  >
+                                    {copiedId === group.orderId ? (
+                                      <Check className="h-3 w-3" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full text-xs"
-                                onClick={() =>
-                                  window.open(
-                                    `https://wa.me/31${order.phone.replace(/[^0-9]/g, "")}?text=Hallo ${order.name}, bedankt voor je YoungRidersOost bestelling. Je ordernummer is ${order.id}.`,
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                {order.phone}
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              {translateColor(order.color)}
-                              <br />
-                              <span className="text-sm text-muted-foreground">Maat: {order.size.toUpperCase()}</span>
-                            </TableCell>
-                            <TableCell>€{order.price.toFixed(2)}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-1">
+                              </TableCell>
+                              <TableCell>{group.customer}</TableCell>
+                              <TableCell>{formatDate(group.date)}</TableCell>
+                              <TableCell>
                                 <div
-                                  className={`text-sm rounded-md px-2 py-1 text-white ${
-                                    order.status === "nieuw"
+                                  className={`text-sm rounded-md px-2 py-1 text-white text-center ${
+                                    group.status === "nieuw"
                                       ? "bg-blue-500"
-                                      : order.status === "betaald"
+                                      : group.status === "betaald"
                                         ? "bg-green-500"
-                                        : order.status === "verzonden"
-                                          ? "bg-purple-500"
-                                          : order.status === "afgehaald"
-                                            ? "bg-green-700"
-                                            : "bg-red-500"
+                                        : group.status === "besteld"
+                                          ? "bg-yellow-500"
+                                          : group.status === "verzonden"
+                                            ? "bg-purple-500"
+                                            : group.status === "afgehaald"
+                                              ? "bg-green-700"
+                                              : "bg-red-500"
                                   }`}
                                 >
-                                  {order.status === "nieuw"
+                                  {group.status === "nieuw"
                                     ? "Nieuw"
-                                    : order.status === "betaald"
+                                    : group.status === "betaald"
                                       ? "Betaald"
-                                      : order.status === "verzonden"
-                                        ? "Verzonden"
-                                        : order.status === "afgehaald"
-                                          ? "Afgehaald"
-                                          : "Geannuleerd"}
+                                      : group.status === "besteld"
+                                        ? "Besteld bij leverancier"
+                                        : group.status === "verzonden"
+                                          ? "Verzonden"
+                                          : group.status === "afgehaald"
+                                            ? "Afgehaald"
+                                            : "Geannuleerd"}
                                 </div>
-                                <div className="flex gap-1">
-                                  {order.isCrew && (
-                                    <div className="text-xs bg-yellow-500 text-white rounded-md px-2 py-1">CREW</div>
-                                  )}
-                                  {order.orderedFromSupplier && (
-                                    <div className="text-xs bg-blue-500 text-white rounded-md px-2 py-1">BESTELD</div>
-                                  )}
-                                  {order.trackingNumber && (
-                                    <div className="text-xs bg-green-600 text-white rounded-md px-2 py-1">TRACKING</div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  size="sm"
-                                  variant={order.status === "betaald" ? "default" : "outline"}
-                                  onClick={() => updateOrderStatus(order.id, "betaald")}
-                                >
-                                  Betaald
-                                </Button>
+                              </TableCell>
+                              <TableCell>{group.totalItems}</TableCell>
+                              <TableCell>€{group.totalPrice.toFixed(2)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => router.push(`/admin/order-details/${group.orderId}`)}
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    Details
+                                  </Button>
 
-                                {order.delivery === "shipping" ? (
-                                  <>
+                                  <div className="flex flex-col gap-1">
                                     <Button
                                       size="sm"
-                                      variant={order.status === "verzonden" ? "default" : "outline"}
-                                      onClick={() => updateOrderStatus(order.id, "verzonden")}
+                                      variant={group.status === "betaald" ? "default" : "outline"}
+                                      onClick={() => handleUpdateOrderGroupStatus(group.orderId, "betaald")}
+                                      className="flex items-center"
                                     >
-                                      Verzonden
+                                      <CreditCard className="h-4 w-4 mr-1" />
+                                      Betaald
                                     </Button>
 
                                     <Button
                                       size="sm"
-                                      variant="outline"
-                                      className="bg-green-50 hover:bg-green-100 border-green-200"
-                                      onClick={() => openTrackingDialog(order)}
+                                      variant={group.status === "besteld" ? "default" : "outline"}
+                                      onClick={() => markOrderGroupAsOrderedFromSupplier(group.orderId)}
+                                      className="flex items-center"
                                     >
-                                      <Truck className="h-4 w-4 mr-1" />
-                                      {order.trackingNumber ? "Tracking" : "VintedGO"}
+                                      <Package className="h-4 w-4 mr-1" />
+                                      Besteld
                                     </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant={order.status === "afgehaald" ? "default" : "outline"}
-                                    onClick={() => updateOrderStatus(order.id, "afgehaald")}
-                                  >
-                                    Afgehaald
-                                  </Button>
-                                )}
-
-                                {order.status === "betaald" && (
-                                  <Button
-                                    size="sm"
-                                    variant={order.orderedFromSupplier ? "default" : "outline"}
-                                    className={order.orderedFromSupplier ? "bg-blue-500 hover:bg-blue-600" : ""}
-                                    onClick={() => markAsOrderedFromSupplier(order.id)}
-                                  >
-                                    Besteld
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
+                          <TableCell colSpan={7} className="text-center py-8">
                             Geen bestellingen gevonden
                           </TableCell>
                         </TableRow>
@@ -752,16 +925,15 @@ export default function AdminPage() {
               <div className="mt-6">
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Server Opslag & DHL Tracking</AlertTitle>
+                  <AlertTitle>Bestellingen per Order ID</AlertTitle>
                   <AlertDescription>
                     <p className="mb-2">
-                      Bestellingen worden nu opgeslagen op de server in plaats van in de browser. Dit betekent dat de
-                      gegevens beschikbaar zijn vanaf elk apparaat en niet verloren gaan wanneer de browser cache wordt
-                      gewist.
+                      Bestellingen worden nu gegroepeerd op bestelnummer. Klik op "Details" om alle items in een
+                      bestelling te bekijken.
                     </p>
                     <p>
-                      Je kunt nu ook DHL tracking nummers toevoegen aan verzonden bestellingen en deze direct via
-                      WhatsApp naar klanten sturen.
+                      Je kunt de status van alle items in een bestelling tegelijk bijwerken met de knoppen "Betaald" en
+                      "Besteld".
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -876,16 +1048,6 @@ export default function AdminPage() {
           </Card>
         </Link>
       </div>
-
-      {/* Tracking Dialog */}
-      {selectedOrder && (
-        <TrackingDialog
-          order={selectedOrder}
-          isOpen={trackingDialogOpen}
-          onClose={() => setTrackingDialogOpen(false)}
-          onSuccess={handleTrackingSuccess}
-        />
-      )}
     </div>
   )
 }
