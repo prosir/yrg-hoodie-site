@@ -73,7 +73,10 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
   }, [orderId, toast])
 
   // Vertaal kleurnamen naar Nederlands
-  const translateColor = (color: string) => {
+  const translateColor = (color: string, colorName?: string) => {
+    // If colorName is provided, use it
+    if (colorName) return colorName
+
     const colorMap: Record<string, string> = {
       lilac: "Lila",
       "ocean-blue": "Oceaanblauw",
@@ -337,7 +340,7 @@ Bekijk je bestelling hier: ${statusUrl}`
                   <TableBody>
                     {groupedItems.map(({ order, count }, index) => (
                       <TableRow key={index}>
-                        <TableCell>{translateColor(order.color)} Hoodie</TableCell>
+                        <TableCell>{translateColor(order.color, order.colorName)} Hoodie</TableCell>
                         <TableCell>{order.size.toUpperCase()}</TableCell>
                         <TableCell>{count}</TableCell>
                         <TableCell>{order.delivery === "pickup" ? "Ophalen" : "Verzenden"}</TableCell>

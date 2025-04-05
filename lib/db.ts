@@ -12,6 +12,7 @@ export type Order = {
   phone: string
   address: string
   color: string
+  colorName?: string // Toegevoegd voor weergave in bestellijst
   size: string
   delivery: "pickup" | "shipping"
   notes?: string

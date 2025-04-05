@@ -16,6 +16,7 @@ export type Product = {
   description: string
   categoryId: string
   price: number
+  colorName?: string // Toegevoegd voor weergave in bestellijst
   images: string[]
   sizes?: ProductSize[]
   colors?: string[]

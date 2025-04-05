@@ -1,44 +1,44 @@
 [
   {
-    "name": "Hoodie Lilac",
-    "slug": "hoodie-lilac",
-    "description": "Lila Hoodie – Proud Member of the Motorrijdgroep x YoungRiders Oost 💜🏍️\n\nDeze hoodie is gemaakt voor echte liefhebbers van de weg én van hun crew. In stijl én comfort cruisen? Dan is dit jouw nieuwe favoriet.\n\n🔧 Achterop: een groot YoungRiders Oost logo (35 cm breed) – duidelijk zichtbaar, zodat iedereen weet bij welke motorrijdgroep jij hoort.\n📱 Links voorop: het Instagram-logo gecombineerd met de tekst Proud Member Of – subtiel, maar krachtig.\n\nDeze lila hoodie combineert een frisse, unieke kleur met een stoere vibe. Perfect voor onderweg, op een meeting of gewoon lekker chillen met de groep.\n\n✔️ Exclusief voor members van de motorrijdgroep\n✔️ Zachte binnenkant, stevige kwaliteit – ideaal voor alle seizoenen\n✔️ Unisex fit met relaxed model",
+    "name": "Lilac Hoodie",
+    "slug": "lilac-hoodie",
+    "description": "ttatsatsadsada",
     "categoryId": "376e3020-fcfb-48e1-8add-68ac8d9a7d3b",
     "price": 50,
+    "colorName": "Lilac Hoodie",
     "images": [
-      "/uploads/products/1365cd50-e2c8-4dd2-8cb6-90e7cc89e2f1.jpg"
+      "/uploads/products/02996396-e616-4740-af5f-aef8bfb755d8.jpg"
     ],
+    "active": true,
+    "featured": false,
+    "id": "05141bdf-4193-4dbe-b4f0-3be894e36e70",
+    "createdAt": "2025-04-05T13:40:01.702Z",
+    "updatedAt": "2025-04-05T13:47:39.351Z",
     "sizes": [
       {
         "name": "S",
-        "stock": 100
+        "stock": 4
       },
       {
         "name": "L",
-        "stock": 100
+        "stock": 4
       },
       {
         "name": "XXL",
-        "stock": 100
+        "stock": 4
       },
       {
         "name": "M",
-        "stock": 100
+        "stock": 4
       },
       {
         "name": "XL",
-        "stock": 100
+        "stock": 4
       },
       {
         "name": "XXXL",
-        "stock": 100
+        "stock": 4
       }
-    ],
-    "colors": [],
-    "active": true,
-    "featured": false,
-    "id": "57372526-490b-4645-bfe0-76e0e20117b9",
-    "createdAt": "2025-04-05T12:35:04.774Z",
-    "updatedAt": "2025-04-05T12:35:34.037Z"
+    ]
   }
 ]

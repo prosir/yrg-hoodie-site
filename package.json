@@ -61,8 +61,8 @@
     "@emotion/is-prop-valid": "latest",
     "fs": "latest",
     "path": "latest",
-    "uuid": "latest",
-    "framer-motion": "latest"
+    "framer-motion": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

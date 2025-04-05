@@ -7,6 +7,8 @@ export type CartItem = {
   productId: string
   name: string
   size?: string
+  color: string
+  colorName: string
   price: number
   quantity: number
   image: string
@@ -57,7 +59,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Check if the item already exists with the same product ID and size
       const existingItemIndex = prev.findIndex(
         (item) =>
-          item.productId === newItem.productId && item.size === newItem.size && item.delivery === newItem.delivery,
+          item.productId === newItem.productId &&
+          item.size === newItem.size &&
+          item.color === newItem.color &&
+          item.delivery === newItem.delivery,
       )
 
       if (existingItemIndex >= 0) {

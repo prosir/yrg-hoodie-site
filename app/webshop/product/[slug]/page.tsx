@@ -19,6 +19,8 @@ import { getProductBySlug } from "@/lib/db-products"
 import { getCategoryById } from "@/lib/db-categories"
 import type { Product } from "@/lib/db-products"
 import type { ProductCategory } from "@/lib/db-categories"
+import { v4 as uuidv4 } from "uuid"
+import type { CartItem } from "@/lib/cart"
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
   // Controleer of er andere dynamische routes zijn die conflicteren met deze
@@ -80,7 +82,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   const handleAddToCart = () => {
     if (!product) return
 
-    if (category?.isClothing && !selectedSize) {
+    if (!selectedSize) {
       toast({
         title: "Selecteer een maat",
         description: "Kies een maat voordat je het product aan je winkelwagen toevoegt.",
@@ -89,38 +91,28 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       return
     }
 
-    // Controleer of de geselecteerde maat op voorraad is
-    if (category?.isClothing && selectedSize) {
-      const selectedSizeObj = product.sizes?.find((size) => size.name === selectedSize)
-      if (selectedSizeObj && selectedSizeObj.stock < quantity) {
-        toast({
-          title: "Niet voldoende voorraad",
-          description: `Er zijn slechts ${selectedSizeObj.stock} stuks beschikbaar in maat ${selectedSize}.`,
-          variant: "destructive",
-        })
-        return
-      }
-    }
-
-    // Voeg het item toe aan de winkelwagen met de geselecteerde hoeveelheid
-    addItem({
-      id: `${product.id}-${selectedSize}-${deliveryMethod}-${Date.now()}`,
+    const cartItem: CartItem = {
+      id: uuidv4(),
       productId: product.id,
       name: product.name,
       size: selectedSize,
+      color: product.slug.split("-")[0], // Assuming the slug starts with the color
+      colorName: product.colorName || product.name, // Use colorName if available
       price: product.price,
-      quantity: quantity,
-      image: product.images && product.images.length > 0 ? product.images[0] : "/placeholder.svg",
+      quantity: 1,
+      image: product.images[0] || "/placeholder.svg?height=200&width=200",
       delivery: deliveryMethod,
-      shippingCost: shippingCost,
-    })
+      shippingCost: deliveryMethod === "shipping" ? 3.5 : 0,
+    }
+
+    addItem(cartItem)
 
     toast({
       title: "Product toegevoegd",
-      description: `${product.name} ${selectedSize ? `(maat ${selectedSize.toUpperCase()})` : ""} is toegevoegd aan je winkelwagen.`,
+      description: `${product.name} (Maat ${selectedSize.toUpperCase()}) is toegevoegd aan je winkelwagen.`,
     })
 
-    // Navigate to cart
+    // Optionally, redirect to cart
     router.push("/cart")
   }
 

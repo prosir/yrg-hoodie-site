@@ -14,7 +14,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { Loader2, ArrowLeft, Eye } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { saveBase64Image } from "@/lib/image-upload"
 
 interface Ride {
   id: string
@@ -37,6 +36,7 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -106,7 +106,7 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
     }))
   }
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -120,40 +120,47 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
       return
     }
 
-    try {
-      setIsSubmitting(true)
-      const base64 = await convertImageToBase64(file)
-      const imageUrl = await saveBase64Image(base64)
-      setFormData((prev) => ({ ...prev, image: imageUrl }))
-      setImagePreview(imageUrl)
-      toast({
-        title: "Afbeelding geüpload",
-        description: "De afbeelding is succesvol geüpload.",
-      })
-    } catch (error) {
-      toast({
-        title: "Fout bij het uploaden van afbeelding",
-        description: error instanceof Error ? error.message : "Er is een onbekende fout opgetreden",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
+    setImageFile(file)
+
+    // Maak een preview van de afbeelding
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string)
     }
+    reader.readAsDataURL(file)
   }
 
-  const convertImageToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result)
-        } else {
-          reject("Failed to convert image to base64")
-        }
+  const uploadImage = async () => {
+    if (!imageFile) return null
+
+    try {
+      setIsUploading(true)
+      const formData = new FormData()
+      formData.append("file", imageFile)
+      formData.append("folder", "rides")
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Fout bij het uploaden van de afbeelding")
       }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+
+      const data = await response.json()
+      return data.url
+    } catch (error) {
+      console.error("Upload error:", error)
+      toast({
+        title: "Fout bij het uploaden",
+        description: "De afbeelding kon niet worden geüpload. Probeer het opnieuw.",
+        variant: "destructive",
+      })
+      return null
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,13 +178,25 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
         throw new Error("Stel een toegangscode in als deze vereist is")
       }
 
+      // Upload de afbeelding als er een nieuwe is geselecteerd
+      let imageUrl = formData.image
+      if (imageFile) {
+        const uploadedUrl = await uploadImage()
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl
+        }
+      }
+
       // Stuur de data naar de API
       const response = await fetch(`/api/rides?id=${params.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          image: imageUrl,
+        }),
       })
 
       if (!response.ok) {
@@ -202,6 +221,14 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    )
   }
 
   return (
@@ -309,18 +336,29 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
             <div className="space-y-4">
               <Label>Afbeelding</Label>
               <div className="flex items-center gap-4">
-                <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="flex-1" />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={!imageFile}
-                  onClick={() => {
-                    setImageFile(null)
-                    setImagePreview(formData.image || null)
-                  }}
-                >
-                  Annuleren
-                </Button>
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="flex-1"
+                  ref={fileInputRef}
+                />
+                {imageFile && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setImageFile(null)
+                      setImagePreview(formData.image)
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = ""
+                      }
+                    }}
+                  >
+                    Annuleren
+                  </Button>
+                )}
               </div>
 
               {imagePreview && (
@@ -373,8 +411,8 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
             <Button variant="outline" onClick={() => router.back()}>
               Annuleren
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSubmitting || isUploading}>
+              {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Wijzigingen Opslaan
             </Button>
           </CardFooter>

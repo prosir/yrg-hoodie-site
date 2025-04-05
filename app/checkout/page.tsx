@@ -140,6 +140,7 @@ export default function CheckoutPage() {
           phone: values.phone,
           address: formattedAddress,
           color: item.color,
+          colorName: item.colorName || item.color, // Use colorName if available, otherwise fallback to color
           size: item.size,
           delivery: item.delivery,
           notes: values.notes,

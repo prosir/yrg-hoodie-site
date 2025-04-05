@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { getAllCategories, getCategoryById } from "@/lib/db-categories"
 import { addProduct } from "@/lib/db-products"
-import { saveBase64Image } from "@/lib/image-upload"
 import type { ProductCategory } from "@/lib/db-categories"
 import type { Product, ProductSize } from "@/lib/db-products"
 import { ImagePlus, Trash2, Loader2, Save, ArrowLeft, Plus, Minus } from "lucide-react"
@@ -39,9 +38,9 @@ export default function CreateProductPage() {
     description: "",
     categoryId: "",
     price: 0,
+    colorName: "",
     images: [],
     sizes: [],
-    colors: [],
     active: true,
     featured: false,
   })
@@ -105,34 +104,36 @@ export default function CreateProductPage() {
       setUploadingImage(true)
 
       const file = files[0]
-      const reader = new FileReader()
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", "products")
 
-      reader.onload = async (event) => {
-        if (event.target && typeof event.target.result === "string") {
-          const base64Image = event.target.result
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
 
-          // Upload de afbeelding naar de server
-          const imagePath = await saveBase64Image(base64Image)
-
-          // Voeg de afbeelding toe aan de productdata
-          setProductData((prev) => ({
-            ...prev,
-            images: [...(prev.images || []), imagePath],
-          }))
-
-          // Reset het bestandsinvoerveld
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ""
-          }
-
-          toast({
-            title: "Afbeelding geüpload",
-            description: "De afbeelding is succesvol geüpload.",
-          })
-        }
+      if (!response.ok) {
+        throw new Error("Fout bij het uploaden van de afbeelding")
       }
 
-      reader.readAsDataURL(file)
+      const data = await response.json()
+
+      // Voeg de afbeelding toe aan de productdata
+      setProductData((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), data.url],
+      }))
+
+      // Reset het bestandsinvoerveld
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+
+      toast({
+        title: "Afbeelding geüpload",
+        description: "De afbeelding is succesvol geüpload.",
+      })
     } catch (error) {
       toast({
         title: "Fout bij het uploaden van afbeelding",
@@ -160,27 +161,6 @@ export default function CreateProductPage() {
     }))
   }
 
-  const addColor = () => {
-    setProductData((prev) => ({
-      ...prev,
-      colors: [...(prev.colors || []), ""],
-    }))
-  }
-
-  const updateColor = (index: number, color: string) => {
-    setProductData((prev) => ({
-      ...prev,
-      colors: prev.colors?.map((c, i) => (i === index ? color : c)),
-    }))
-  }
-
-  const removeColor = (index: number) => {
-    setProductData((prev) => ({
-      ...prev,
-      colors: prev.colors?.filter((_, i) => i !== index),
-    }))
-  }
-
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
@@ -205,11 +185,6 @@ export default function CreateProductPage() {
       // Genereer een slug als deze niet is ingevuld
       if (!productData.slug) {
         productData.slug = generateSlug(productData.name)
-      }
-
-      // Verwijder lege kleuren
-      if (productData.colors) {
-        productData.colors = productData.colors.filter((color) => color.trim() !== "")
       }
 
       // Voeg het product toe
@@ -268,7 +243,6 @@ export default function CreateProductPage() {
             <TabsTrigger value="general">Algemeen</TabsTrigger>
             <TabsTrigger value="images">Afbeeldingen</TabsTrigger>
             <TabsTrigger value="inventory">Voorraad & Maten</TabsTrigger>
-            <TabsTrigger value="colors">Kleuren</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
@@ -357,6 +331,19 @@ export default function CreateProductPage() {
                       placeholder="0.00"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="colorName">Kleur Naam (voor bestellijst)</Label>
+                  <Input
+                    id="colorName"
+                    value={productData.colorName || ""}
+                    onChange={(e) => setProductData({ ...productData, colorName: e.target.value })}
+                    placeholder="Bijv. Lila, Oceaanblauw, etc."
+                  />
+                  <p className="text-sm text-gray-500">
+                    Deze naam wordt gebruikt in de bestellijst en is alleen zichtbaar voor beheerders.
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-4 pt-2">
@@ -523,41 +510,6 @@ export default function CreateProductPage() {
                     <p>Selecteer eerst een kledingcategorie om maten en voorraad te beheren.</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="colors">
-            <Card>
-              <CardHeader>
-                <CardTitle>Kleuren</CardTitle>
-                <CardDescription>Voeg kleuren toe voor dit product (optioneel).</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {productData.colors &&
-                    productData.colors.map((color, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          value={color}
-                          onChange={(e) => updateColor(index, e.target.value)}
-                          placeholder="Bijv. Zwart, Rood, Blauw"
-                        />
-                        <Button variant="outline" size="icon" className="shrink-0" onClick={() => removeColor(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-
-                  <Button variant="outline" onClick={addColor}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Kleur Toevoegen
-                  </Button>
-
-                  <p className="text-sm text-gray-500">
-                    Tip: Voeg kleuren toe als het product in verschillende kleuren beschikbaar is.
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>

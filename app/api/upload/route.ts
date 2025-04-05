@@ -5,30 +5,30 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
+    const folder = (formData.get("folder") as string) || "rides"
 
     if (!file) {
-      return NextResponse.json({ error: "Geen bestand geüpload" }, { status: 400 })
+      return NextResponse.json({ error: "Geen bestand gevonden" }, { status: 400 })
     }
 
-    // Controleer bestandstype
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Alleen afbeeldingen zijn toegestaan" }, { status: 400 })
-    }
-
-    // Lees het bestand als ArrayBuffer
+    // Converteer het bestand naar base64
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-
-    // Converteer naar base64
     const base64 = `data:${file.type};base64,${buffer.toString("base64")}`
 
     // Sla de afbeelding op
-    const imageUrl = await saveBase64Image(base64)
+    const imageUrl = await saveBase64Image(base64, folder)
 
     return NextResponse.json({ url: imageUrl })
   } catch (error) {
-    console.error("Upload error:", error)
+    console.error("Fout bij het uploaden van de afbeelding:", error)
     return NextResponse.json({ error: "Er is een fout opgetreden bij het uploaden van de afbeelding" }, { status: 500 })
   }
+}
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
 }
 
