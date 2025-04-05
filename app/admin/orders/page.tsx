@@ -13,6 +13,17 @@ import { useRouter } from "next/navigation"
 import { getAllOrders } from "@/lib/db"
 import type { Order } from "@/lib/db"
 
+// Interface voor gegroepeerde bestellingen
+interface OrderGroup {
+  orderId: string
+  date: string
+  name: string
+  email: string
+  phone: string
+  status: string
+  items: Order[]
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +62,29 @@ export default function OrdersPage() {
 
     return matchesSearch && matchesStatus
   })
+
+  // Groepeer bestellingen op orderId
+  const groupedOrders = filteredOrders.reduce<OrderGroup[]>((acc, order) => {
+    const existingOrderIndex = acc.findIndex((group) => group.orderId === order.orderId)
+
+    if (existingOrderIndex >= 0) {
+      // Als de orderId al bestaat, voeg dit item toe aan de items array
+      acc[existingOrderIndex].items.push(order)
+    } else {
+      // Anders maak een nieuwe groep met deze orderId
+      acc.push({
+        orderId: order.orderId,
+        date: order.date,
+        name: order.name,
+        email: order.email,
+        phone: order.phone,
+        status: order.status,
+        items: [order],
+      })
+    }
+
+    return acc
+  }, [])
 
   // Get counts for each status
   const statusCounts = {
@@ -183,7 +217,7 @@ export default function OrdersPage() {
 
             <TabsContent value="all" className="m-0">
               <OrdersTable
-                orders={filteredOrders}
+                orders={groupedOrders}
                 loading={loading}
                 getStatusBadgeColor={getStatusBadgeColor}
                 formatDate={formatDate}
@@ -192,7 +226,7 @@ export default function OrdersPage() {
             </TabsContent>
             <TabsContent value="nieuw" className="m-0">
               <OrdersTable
-                orders={filteredOrders}
+                orders={groupedOrders}
                 loading={loading}
                 getStatusBadgeColor={getStatusBadgeColor}
                 formatDate={formatDate}
@@ -201,7 +235,7 @@ export default function OrdersPage() {
             </TabsContent>
             <TabsContent value="betaald" className="m-0">
               <OrdersTable
-                orders={filteredOrders}
+                orders={groupedOrders}
                 loading={loading}
                 getStatusBadgeColor={getStatusBadgeColor}
                 formatDate={formatDate}
@@ -210,7 +244,7 @@ export default function OrdersPage() {
             </TabsContent>
             <TabsContent value="verzonden" className="m-0">
               <OrdersTable
-                orders={filteredOrders}
+                orders={groupedOrders}
                 loading={loading}
                 getStatusBadgeColor={getStatusBadgeColor}
                 formatDate={formatDate}
@@ -225,7 +259,7 @@ export default function OrdersPage() {
 }
 
 interface OrdersTableProps {
-  orders: Order[]
+  orders: OrderGroup[]
   loading: boolean
   getStatusBadgeColor: (status: string) => string
   formatDate: (dateString: string) => string
@@ -253,53 +287,57 @@ function OrdersTable({ orders, loading, getStatusBadgeColor, formatDate, handleV
             <TableHead>Bestelnummer</TableHead>
             <TableHead>Datum</TableHead>
             <TableHead>Klant</TableHead>
-            <TableHead>Product</TableHead>
+            <TableHead>Producten</TableHead>
             <TableHead>Prijs</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Acties</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">{order.orderId}</TableCell>
-              <TableCell>{formatDate(order.date)}</TableCell>
+          {orders.map((orderGroup) => (
+            <TableRow key={orderGroup.orderId}>
+              <TableCell className="font-medium">{orderGroup.orderId}</TableCell>
+              <TableCell>{formatDate(orderGroup.date)}</TableCell>
               <TableCell>
                 <div>
-                  <div className="font-medium">{order.name}</div>
-                  <div className="text-sm text-gray-500">{order.email}</div>
+                  <div className="font-medium">{orderGroup.name}</div>
+                  <div className="text-sm text-gray-500">{orderGroup.email}</div>
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{
-                      backgroundColor:
-                        order.color === "lilac"
-                          ? "#c084fc"
-                          : order.color === "ocean-blue"
-                            ? "#60a5fa"
-                            : order.color === "burgundy"
-                              ? "#ef4444"
-                              : order.color === "black"
-                                ? "#1f2937"
-                                : order.color === "olive"
-                                  ? "#65a30d"
-                                  : "#9ca3af",
-                    }}
-                  ></div>
-                  <span>
-                    Hoodie {order.size.toUpperCase()} {order.quantity > 1 ? `(${order.quantity}x)` : ""}
-                  </span>
+                <div className="space-y-1">
+                  {orderGroup.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor:
+                            item.color === "lilac"
+                              ? "#c084fc"
+                              : item.color === "ocean-blue"
+                                ? "#60a5fa"
+                                : item.color === "burgundy"
+                                  ? "#ef4444"
+                                  : item.color === "black"
+                                    ? "#1f2937"
+                                    : item.color === "olive"
+                                      ? "#65a30d"
+                                      : "#9ca3af",
+                        }}
+                      ></div>
+                      <span>
+                        Hoodie {item.size.toUpperCase()} {item.quantity > 1 ? `(${item.quantity}x)` : ""}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </TableCell>
-              <TableCell>€{order.price.toFixed(2)}</TableCell>
+              <TableCell>€{orderGroup.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</TableCell>
               <TableCell>
-                <Badge className={getStatusBadgeColor(order.status)}>{order.status}</Badge>
+                <Badge className={getStatusBadgeColor(orderGroup.status)}>{orderGroup.status}</Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order.orderId)}>
+                <Button variant="ghost" size="sm" onClick={() => handleViewOrder(orderGroup.orderId)}>
                   <Eye className="h-4 w-4" />
                 </Button>
               </TableCell>

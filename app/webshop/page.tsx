@@ -4,14 +4,14 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Logo } from "@/components/logo"
 import { getActiveCategories } from "@/lib/db-categories"
 import { getActiveProducts, getFeaturedProducts } from "@/lib/db-products"
 import { getSiteConfig } from "@/lib/site-config"
 import type { ProductCategory } from "@/lib/db-categories"
 import type { Product } from "@/lib/db-products"
 import type { SiteConfig } from "@/lib/site-config"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function Webshop() {
   const [categories, setCategories] = useState<ProductCategory[]>([])
@@ -20,6 +20,7 @@ export default function Webshop() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [siteConfig, setSiteConfig] = useState<SiteConfig | null>(null)
+  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([])
 
   // Haal categorieën, producten en site-instellingen op bij het laden van de pagina
   useEffect(() => {
@@ -49,6 +50,14 @@ export default function Webshop() {
         setCategories(fetchedCategories)
         setProducts(fetchedProducts)
         setFeaturedProducts(fetchedFeaturedProducts)
+
+        // Check for low stock products
+        const lowStock = fetchedProducts.filter((product) => {
+          if (!product.sizes) return false
+          // Check if any size has low stock (less than 3 items)
+          return product.sizes.some((size) => size.stock > 0 && size.stock < 3)
+        })
+        setLowStockProducts(lowStock)
       } catch (error) {
         console.error("Fout bij het ophalen van webshop data:", error)
       } finally {
@@ -69,39 +78,6 @@ export default function Webshop() {
 
   return (
     <div className="min-h-screen bg-white text-gray-800">
-      {/* Navigation */}
-      <header className="py-6 border-b border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Logo />
-            <nav>
-              <ul className="flex space-x-8">
-                <li>
-                  <Link href="/" className="text-gray-700 hover:text-olive-600 transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/webshop" className="text-olive-600">
-                    Webshop
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/gallery" className="text-gray-700 hover:text-olive-600 transition-colors">
-                    Galerij
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/rides" className="text-gray-700 hover:text-olive-600 transition-colors">
-                    Ritten
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       {/* Webshop Header */}
       <section className="py-12 bg-gradient-to-b from-white to-gray-100">
         <div className="container mx-auto px-4">
@@ -120,6 +96,18 @@ export default function Webshop() {
           </motion.div>
         </div>
       </section>
+
+      {/* Low Stock Alert */}
+      {lowStockProducts.length > 0 && (
+        <div className="container mx-auto px-4 py-4">
+          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              Let op: Sommige producten hebben nog maar beperkte voorraad beschikbaar!
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="py-20 flex justify-center items-center">
@@ -193,6 +181,12 @@ export default function Webshop() {
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-110"
                         />
+                        {/* Low stock badge */}
+                        {product.sizes && product.sizes.some((size) => size.stock > 0 && size.stock < 3) && (
+                          <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded">
+                            Beperkte voorraad
+                          </div>
+                        )}
                       </div>
                       <div className="p-6">
                         <h3 className="font-bold text-xl mb-2 text-gray-800">{product.name}</h3>
@@ -243,6 +237,12 @@ export default function Webshop() {
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
+                      {/* Low stock badge */}
+                      {product.sizes && product.sizes.some((size) => size.stock > 0 && size.stock < 3) && (
+                        <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded">
+                          Beperkte voorraad
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="font-bold text-xl mb-2 text-gray-800">{product.name}</h3>
@@ -290,75 +290,10 @@ export default function Webshop() {
         </>
       )}
 
-      {/* Footer */}
-      <footer className="bg-gray-100 border-t border-gray-200 py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-8 md:mb-0">
-              <Logo />
-              <p className="mt-2 text-gray-600">Dé motorclub voor jonge rijders in Oost-Nederland</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Navigatie</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/" className="text-gray-600 hover:text-olive-600 transition-colors">
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/webshop" className="text-gray-600 hover:text-olive-600 transition-colors">
-                      Webshop
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="text-gray-600 hover:text-olive-600 transition-colors">
-                      Galerij
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/rides" className="text-gray-600 hover:text-olive-600 transition-colors">
-                      Ritten
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Contact</h3>
-                <ul className="space-y-2">
-                  <li className="text-gray-600">Telefoon: 06-44947194</li>
-                  <li className="text-gray-600">WhatsApp: 06-44947194</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Volg Ons</h3>
-                <div className="flex space-x-4">
-                  <a
-                    href="#"
-                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-olive-600 hover:bg-olive-600 hover:text-white transition-colors border border-olive-600"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18.48 10.5H14V7.5C14 6.12 14.34 5.25 16.5 5.25H18.75V1.5H14C9.75 1.5 7.5 3.75 7.5 7.5V10.5H4.5V15H7.5V22.5H14V15H17.25L18.48 10.5Z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-olive-600 hover:bg-olive-600 hover:text-white transition-colors border border-olive-600"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-            <p className="text-gray-500">
-              &copy; {new Date().getFullYear()} YoungRidersOost. Alle rechten voorbehouden.
-            </p>
-          </div>
+      {/* Simple Footer */}
+      <footer className="bg-gray-100 border-t border-gray-200 py-8">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-gray-500">&copy; {new Date().getFullYear()} YoungRidersOost. Alle rechten voorbehouden.</p>
         </div>
       </footer>
     </div>

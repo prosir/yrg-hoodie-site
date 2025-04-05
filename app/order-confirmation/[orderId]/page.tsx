@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -83,36 +82,6 @@ export default function OrderConfirmationPage({ params }: { params: { orderId: s
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -123,36 +92,6 @@ export default function OrderConfirmationPage({ params }: { params: { orderId: s
   if (orders.length === 0) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Bestelling niet gevonden</AlertTitle>
@@ -187,36 +126,6 @@ export default function OrderConfirmationPage({ params }: { params: { orderId: s
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
-      {/* Navigatie balk */}
-      <header className="border-b py-6 mb-8">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-          <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-          </Link>
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <nav>
-              <ul className="flex space-x-6">
-                <li>
-                  <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                    Hoodies
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                    Info
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                    Crew
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       <Alert className="bg-green-50 border-green-200 mb-6">
         <CheckCircle2 className="h-5 w-5 text-green-600" />
         <AlertTitle className="text-xl font-bold text-green-700">Bestelling Succesvol Verzonden!</AlertTitle>

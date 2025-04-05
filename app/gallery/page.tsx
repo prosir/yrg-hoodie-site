@@ -1,70 +1,167 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Logo } from "@/components/logo"
+import type { Album, AlbumMedia } from "@/lib/db-albums"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Download,
+  Film,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+} from "lucide-react"
 
 export default function Gallery() {
-  const [filter, setFilter] = useState("all")
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState("all")
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [mediaToEdit, setMediaToEdit] = useState<AlbumMedia | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const lightboxContainerRef = useRef<HTMLDivElement>(null)
 
-  // Gallery data - in a real implementation this would come from a database or API
-  const galleryItems = [
-    { id: 1, category: "rides", title: "Twente Tour 2024", image: "/placeholder.svg?height=600&width=800" },
-    { id: 2, category: "rides", title: "Veluwe Rit", image: "/placeholder.svg?height=600&width=800" },
-    { id: 3, category: "events", title: "Zomerbijeenkomst", image: "/placeholder.svg?height=600&width=800" },
-    { id: 4, category: "members", title: "Nieuwe leden", image: "/placeholder.svg?height=600&width=800" },
-    { id: 5, category: "rides", title: "Achterhoek Avontuur", image: "/placeholder.svg?height=600&width=800" },
-    { id: 6, category: "events", title: "BBQ Meetup", image: "/placeholder.svg?height=600&width=800" },
-    { id: 7, category: "members", title: "Groepsfoto", image: "/placeholder.svg?height=600&width=800" },
-    { id: 8, category: "rides", title: "Duitsland Weekend", image: "/placeholder.svg?height=600&width=800" },
-    { id: 9, category: "events", title: "Winterbijeenkomst", image: "/placeholder.svg?height=600&width=800" },
-    { id: 10, category: "members", title: "Nieuwe motoren", image: "/placeholder.svg?height=600&width=800" },
-    { id: 11, category: "rides", title: "Rondje IJsselmeer", image: "/placeholder.svg?height=600&width=800" },
-    { id: 12, category: "events", title: "Motorshow Bezoek", image: "/placeholder.svg?height=600&width=800" },
-  ]
+  useEffect(() => {
+    fetchAlbums()
+  }, [])
 
-  // Filter gallery items based on selected category
-  const filteredItems = filter === "all" ? galleryItems : galleryItems.filter((item) => item.category === filter)
+  useEffect(() => {
+    if (lightboxOpen && selectedAlbum?.images?.[currentMediaIndex]?.type === "video") {
+      if (isPlaying && videoRef.current) {
+        videoRef.current.play()
+      } else if (videoRef.current) {
+        videoRef.current.pause()
+      }
+    }
+  }, [isPlaying, lightboxOpen, currentMediaIndex, selectedAlbum])
+
+  useEffect(() => {
+    if (lightboxOpen && videoRef.current) {
+      videoRef.current.muted = isMuted
+    }
+  }, [isMuted, lightboxOpen])
+
+  const fetchAlbums = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/albums")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch albums")
+      }
+
+      const data = await response.json()
+      setAlbums(data)
+    } catch (error) {
+      console.error("Error fetching albums:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredAlbums = activeTab === "all" ? albums : albums.filter((album) => album.category === activeTab)
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat("nl-NL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
+  }
+
+  const openAlbum = (album: Album) => {
+    setSelectedAlbum(album)
+  }
+
+  const closeAlbum = () => {
+    setSelectedAlbum(null)
+  }
+
+  const openLightbox = (index: number) => {
+    setCurrentMediaIndex(index)
+    setLightboxOpen(true)
+    setIsPlaying(selectedAlbum?.images?.[index]?.type === "video")
+  }
+
+  const closeLightbox = () => {
+    setLightboxOpen(false)
+    setIsPlaying(false)
+  }
+
+  const nextMedia = () => {
+    if (!selectedAlbum?.images) return
+    setIsPlaying(false)
+    setCurrentMediaIndex((prev) => (prev + 1) % selectedAlbum.images.length)
+    setTimeout(() => {
+      if (selectedAlbum.images[currentMediaIndex]?.type === "video") {
+        setIsPlaying(true)
+      }
+    }, 100)
+  }
+
+  const prevMedia = () => {
+    if (!selectedAlbum?.images) return
+    setIsPlaying(false)
+    setCurrentMediaIndex((prev) => (prev - 1 + selectedAlbum.images.length) % selectedAlbum.images.length)
+    setTimeout(() => {
+      if (selectedAlbum.images[currentMediaIndex]?.type === "video") {
+        setIsPlaying(true)
+      }
+    }, 100)
+  }
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying)
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+  }
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement && lightboxContainerRef.current) {
+      lightboxContainerRef.current.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`)
+      })
+      setIsFullscreen(true)
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+        setIsFullscreen(false)
+      }
+    }
+  }
+
+  const downloadMedia = (media: AlbumMedia) => {
+    const link = document.createElement("a")
+    link.href = media.path
+    link.download = media.title || "download"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const currentMedia = selectedAlbum?.images?.[currentMediaIndex]
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Navigation */}
-      <header className="py-6 border-b border-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <Logo />
-            <nav>
-              <ul className="flex space-x-8">
-                <li>
-                  <Link href="/" className="text-white hover:text-red-500 transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/webshop" className="text-white hover:text-red-500 transition-colors">
-                    Webshop
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/gallery" className="text-red-500">
-                    Galerij
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/rides" className="text-white hover:text-red-500 transition-colors">
-                    Ritten
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-white text-black">
       {/* Gallery Header */}
-      <section className="py-12 bg-gradient-to-b from-black to-gray-900">
+      <section className="py-12 bg-gradient-to-b from-gray-100 to-white">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -73,166 +170,264 @@ export default function Gallery() {
             className="text-center"
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              ONZE <span className="text-red-600">GALERIJ</span>
+              ONZE <span className="text-olive-600">GALERIJ</span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Bekijk foto's van onze ritten, evenementen en leden.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Bekijk foto's en video's van onze ritten, evenementen en leden.
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Filter */}
-      <section className="py-8 bg-gray-900">
+      <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filter === "all" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              Alle Foto's
-            </button>
-            <button
-              onClick={() => setFilter("rides")}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filter === "rides" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              Ritten
-            </button>
-            <button
-              onClick={() => setFilter("events")}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filter === "events" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              Evenementen
-            </button>
-            <button
-              onClick={() => setFilter("members")}
-              className={`px-6 py-2 rounded-full transition-colors ${
-                filter === "members" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              Leden
-            </button>
-          </div>
-        </div>
-      </section>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="flex justify-center mb-8">
+              <TabsTrigger value="all">Alle Albums</TabsTrigger>
+              <TabsTrigger value="rides">Ritten</TabsTrigger>
+              <TabsTrigger value="events">Evenementen</TabsTrigger>
+              <TabsTrigger value="members">Leden</TabsTrigger>
+              <TabsTrigger value="other">Overig</TabsTrigger>
+            </TabsList>
 
-      {/* Gallery */}
-      <section className="py-12 bg-black">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="relative group overflow-hidden rounded-lg"
-              >
-                <div className="relative h-64 md:h-80">
-                  <Image
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bold text-lg">{item.title}</h3>
-                    <span className="text-sm text-gray-300 capitalize">{item.category}</span>
+            <TabsContent value={activeTab} className="mt-0">
+              {loading ? (
+                <div className="text-center py-10">
+                  <div className="animate-spin h-10 w-10 border-4 border-olive-600 border-t-transparent rounded-full mx-auto"></div>
+                  <p className="mt-4 text-gray-500">Albums laden...</p>
+                </div>
+              ) : selectedAlbum ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <Button variant="outline" onClick={closeAlbum} className="flex items-center gap-2">
+                      <ChevronLeft className="h-4 w-4" />
+                      Terug naar albums
+                    </Button>
+                    <div className="text-right">
+                      <h2 className="text-2xl font-bold">{selectedAlbum.title}</h2>
+                      <p className="text-gray-500 flex items-center justify-end gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(selectedAlbum.date)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-600">{selectedAlbum.description}</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {selectedAlbum.images && selectedAlbum.images.length > 0 ? (
+                      selectedAlbum.images.map((media, index) => (
+                        <motion.div
+                          key={media.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          whileHover={{ y: -5, scale: 1.02 }}
+                          className="relative group cursor-pointer"
+                          onClick={() => openLightbox(index)}
+                        >
+                          <div className="aspect-square bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                            {media.type === "image" ? (
+                              <img
+                                src={media.path || "/placeholder.svg"}
+                                alt={media.title || `Afbeelding ${index + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            ) : (
+                              <div className="relative w-full h-full bg-gray-800">
+                                <video
+                                  src={media.path}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  playsInline
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openLightbox(index)
+                                  }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="bg-black/50 rounded-full p-3">
+                                    <Play className="h-8 w-8 text-white" />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <h3 className="text-white font-bold text-lg">{media.title || `Media ${index + 1}`}</h3>
+                              {media.description && <p className="text-sm text-gray-200">{media.description}</p>}
+                            </div>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="icon"
+                                variant="secondary"
+                                className="h-8 w-8 bg-white/80 hover:bg-white"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  downloadMedia(media)
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="absolute top-2 left-2">
+                              {media.type === "video" && (
+                                <Film className="h-5 w-5 text-white bg-black/50 p-1 rounded-full" />
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-10">
+                        <p className="text-gray-500">Geen media gevonden in dit album.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">Geen foto's gevonden in deze categorie.</p>
-            </div>
-          )}
+              ) : filteredAlbums.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredAlbums.map((album, index) => (
+                    <motion.div
+                      key={album.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.05 }}
+                      whileHover={{ y: -5, scale: 1.02 }}
+                      className="relative group overflow-hidden rounded-lg cursor-pointer"
+                      onClick={() => openAlbum(album)}
+                    >
+                      <div className="relative h-64 md:h-80">
+                        {album.coverImage ? (
+                          <img
+                            src={album.coverImage || "/placeholder.svg"}
+                            alt={album.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-gray-400">Geen afbeelding</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h3 className="text-white font-bold text-lg">{album.title}</h3>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-300 capitalize">{album.category}</span>
+                            <span className="text-sm text-gray-300">{formatDate(album.date)}</span>
+                          </div>
+                          <div className="mt-2 text-sm text-gray-300">{album.images?.length || 0} media items</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">Geen albums gevonden in deze categorie.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800 py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-8 md:mb-0">
-              <Link href="/" className="text-3xl font-bold text-red-600">
-                YoungRidersOost
-              </Link>
-              <p className="mt-2 text-gray-400">Dé motorclub voor jonge rijders in Oost-Nederland</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4">Navigatie</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/" className="text-gray-400 hover:text-red-500 transition-colors">
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/webshop" className="text-gray-400 hover:text-red-500 transition-colors">
-                      Webshop
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/gallery" className="text-gray-400 hover:text-red-500 transition-colors">
-                      Galerij
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/rides" className="text-gray-400 hover:text-red-500 transition-colors">
-                      Ritten
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
-                <ul className="space-y-2">
-                  <li className="text-gray-400">Telefoon: 06-44947194</li>
-                  <li className="text-gray-400">WhatsApp: 06-44947194</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4">Volg Ons</h3>
-                <div className="flex space-x-4">
-                  <a
-                    href="#"
-                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors"
+      {/* Lightbox */}
+      {lightboxOpen && selectedAlbum?.images && (
+        <div
+          ref={lightboxContainerRef}
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
+        >
+          <button
+            className="absolute top-4 right-4 text-white p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
+            onClick={closeLightbox}
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <button
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
+            onClick={prevMedia}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+
+          <div className="max-w-4xl max-h-[80vh] relative">
+            {currentMedia?.type === "image" ? (
+              <img
+                src={currentMedia.path || "/placeholder.svg"}
+                alt={currentMedia.title || `Afbeelding ${currentMediaIndex + 1}`}
+                className="max-h-[80vh] max-w-full object-contain"
+              />
+            ) : (
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  src={currentMedia?.path}
+                  className="max-h-[80vh] max-w-full"
+                  controls={false}
+                  autoPlay={isPlaying}
+                  loop
+                  muted={isMuted}
+                  playsInline
+                />
+                <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-4 p-4">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="bg-black/50 hover:bg-black/80 text-white"
+                    onClick={togglePlay}
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18.48 10.5H14V7.5C14 6.12 14.34 5.25 16.5 5.25H18.75V1.5H14C9.75 1.5 7.5 3.75 7.5 7.5V10.5H4.5V15H7.5V22.5H14V15H17.25L18.48 10.5Z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="#"
-                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors"
+                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="bg-black/50 hover:bg-black/80 text-white"
+                    onClick={toggleMute}
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                    </svg>
-                  </a>
+                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="bg-black/50 hover:bg-black/80 text-white"
+                    onClick={toggleFullscreen}
+                  >
+                    {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                  </Button>
                 </div>
               </div>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/50 text-white">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold">{currentMedia?.title || `Media ${currentMediaIndex + 1}`}</h3>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="bg-black/50 hover:bg-black/80 text-white"
+                  onClick={() => downloadMedia(currentMedia!)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+              {currentMedia?.description && <p className="text-sm text-gray-200 mt-1">{currentMedia.description}</p>}
+              <p className="text-sm text-gray-400 mt-1">
+                {currentMediaIndex + 1} / {selectedAlbum.images.length}
+              </p>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-gray-800 text-center">
-            <p className="text-gray-500">
-              &copy; {new Date().getFullYear()} YoungRidersOost. Alle rechten voorbehouden.
-            </p>
-          </div>
+
+          <button
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
+            onClick={nextMedia}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
         </div>
-      </footer>
+      )}
     </div>
   )
 }

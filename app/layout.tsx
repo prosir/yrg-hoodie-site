@@ -3,13 +3,14 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { CartProvider } from "@/components/cart/cart-context"
+import { SiteNavbar } from "@/components/site-navbar"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "YoungRidersOost | Premium Motorcycle Hoodies",
   description: "Exclusieve hoodies voor de YoungRidersOost motorclub. Ontdek onze premium collectie en rijd met stijl.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -24,7 +25,10 @@ export default function RootLayout({
           Let op: Onze hoodies vallen 1 maat kleiner! Bestel 1 maat groter dan normaal. Voor over motorkleding adviseren
           we 2 maten groter te bestellen.
         </div>
-        <CartProvider>{children}</CartProvider>
+        <CartProvider>
+          <SiteNavbar />
+          {children}
+        </CartProvider>
       </body>
     </html>
   )

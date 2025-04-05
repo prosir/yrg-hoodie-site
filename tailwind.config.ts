@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss"
 
-const config = {
+const config: Config = {
   darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
@@ -53,17 +53,17 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         olive: {
-          50: "#f8f9f1",
-          100: "#eef0df",
-          200: "#dde3c2",
-          300: "#c6d09a",
-          400: "#acb96e",
-          500: "#8e9c4e",
-          600: "#6f7b3c",
-          700: "#556031",
-          800: "#454e2b",
-          900: "#3b4227",
-          950: "#1e2312",
+          50: "#f9faf5",
+          100: "#f1f4e8",
+          200: "#e2e9d0",
+          300: "#cad8ae",
+          400: "#adc285",
+          500: "#8eaa5e",
+          600: "#708a45",
+          700: "#556a36",
+          800: "#45552f",
+          900: "#3a472a",
+          950: "#1e2614",
         },
       },
       borderRadius: {
@@ -73,12 +73,12 @@ const config = {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: 0 },
+          from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: 0 },
+          to: { height: "0" },
         },
       },
       animation: {
@@ -88,7 +88,7 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+}
 
 export default config
 

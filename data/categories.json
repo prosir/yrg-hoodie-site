@@ -4,14 +4,7 @@
     "slug": "hoodies",
     "description": "",
     "isClothing": true,
-    "sizes": [
-      "S",
-      "L",
-      "XXL",
-      "M",
-      "XL",
-      "XXXL"
-    ],
+    "sizes": ["S", "L", "XXL", "M", "XL", "XXXL"],
     "active": true,
     "id": "376e3020-fcfb-48e1-8add-68ac8d9a7d3b",
     "createdAt": "2025-04-05T12:31:05.358Z",
@@ -40,3 +33,4 @@
     "updatedAt": "2025-04-05T12:31:26.562Z"
   }
 ]
+

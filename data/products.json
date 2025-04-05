@@ -6,9 +6,7 @@
     "categoryId": "376e3020-fcfb-48e1-8add-68ac8d9a7d3b",
     "price": 50,
     "colorName": "Lilac Hoodie",
-    "images": [
-      "/uploads/products/02996396-e616-4740-af5f-aef8bfb755d8.jpg"
-    ],
+    "images": ["/uploads/products/02996396-e616-4740-af5f-aef8bfb755d8.jpg"],
     "active": true,
     "featured": false,
     "id": "05141bdf-4193-4dbe-b4f0-3be894e36e70",
@@ -42,3 +40,4 @@
     ]
   }
 ]
+

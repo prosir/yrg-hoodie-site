@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
@@ -236,36 +235,6 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -276,36 +245,6 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
   if (orders.length === 0) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Bestelling niet gevonden</AlertTitle>
@@ -328,36 +267,6 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl">
-      {/* Navigatie balk */}
-      <header className="border-b py-6 mb-8">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-          <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-          </Link>
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <nav>
-              <ul className="flex space-x-6">
-                <li>
-                  <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                    Hoodies
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                    Info
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                    Crew
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       <Card className="mb-6 overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6">
           <div className="flex justify-between items-start">

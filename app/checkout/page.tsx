@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -195,36 +194,6 @@ export default function CheckoutPage() {
   if (isSubmitted) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <Alert className="bg-green-50 border-green-200 mb-6">
           <CheckCircle2 className="h-5 w-5 text-green-600" />
           <AlertTitle className="text-xl font-bold text-green-700">Bestelling Succesvol Verzonden!</AlertTitle>
@@ -300,36 +269,6 @@ export default function CheckoutPage() {
       )}
 
       <div className="container mx-auto px-4 py-12">
-        {/* Navigatie balk */}
-        <header className="border-b py-6 mb-8">
-          <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-            </Link>
-            <div className="flex items-center gap-4 mt-4 md:mt-0">
-              <nav>
-                <ul className="flex space-x-6">
-                  <li>
-                    <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                      Hoodies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                      Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                      Crew
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </div>
-        </header>
-
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl font-bold">Afrekenen</h1>

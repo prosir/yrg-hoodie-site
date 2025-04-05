@@ -1,6 +1,5 @@
 {
   "maintenanceMode": false,
-  "shopClosed": false,
+  "shopClosed": true,
   "maintenancePassword": "test"
 }
-
