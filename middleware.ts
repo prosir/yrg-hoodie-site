@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // Check if the path is an admin route
   if (pathname.startsWith("/admin")) {
     // Skip auth check for the admin login page itself
-    if (pathname === "/admin") {
+    if (pathname === "/admin" || pathname === "/admin/login") {
       return NextResponse.next()
     }
 
@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
 
     // If no admin session cookie or it's not valid, redirect to admin login
     if (!adminSessionCookie || adminSessionCookie.value !== "authenticated") {
-      const url = new URL("/admin", request.url)
+      const url = new URL("/admin/login", request.url)
       return NextResponse.redirect(url)
     }
   }

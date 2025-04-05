@@ -9,112 +9,113 @@ export type SiteConfig = {
   maintenancePassword: string
 }
 
-// We gebruiken een absolute pad voor de config file
+// Pad naar het JSON-bestand voor opslag
 const CONFIG_FILE = path.join(process.cwd(), "data", "site-config.json")
 
-// Initialize with default values
-const DEFAULT_CONFIG: SiteConfig = {
-  maintenanceMode: false,
-  shopClosed: false,
-  maintenancePassword: "youngriders2025",
-}
-
-// Ensure data directory and config file exist
-async function ensureConfig() {
+// Zorg ervoor dat de data directory en bestand bestaan
+async function ensureConfigFile() {
   const dataDir = path.join(process.cwd(), "data")
-
   try {
     await fs.access(dataDir)
   } catch (error) {
+    // Als de directory niet bestaat, maak deze aan
+    console.log("Data directory bestaat niet, wordt aangemaakt...")
     await fs.mkdir(dataDir, { recursive: true })
   }
 
+  // Controleer of het bestand bestaat, zo niet, maak het aan
   try {
     await fs.access(CONFIG_FILE)
   } catch (error) {
-    // If file doesn't exist, create it with default config
-    await fs.writeFile(CONFIG_FILE, JSON.stringify(DEFAULT_CONFIG, null, 2), "utf8")
+    // Als het bestand niet bestaat, maak een nieuw bestand met standaard configuratie
+    console.log("Site-config.json bestand bestaat niet, wordt aangemaakt...")
+    const defaultConfig: SiteConfig = {
+      maintenanceMode: false,
+      shopClosed: false,
+      maintenancePassword: "admin123",
+    }
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2), "utf8")
   }
 }
 
-// Get current site configuration
+// Haal de site configuratie op
 export async function getSiteConfig(): Promise<SiteConfig> {
   try {
-    await ensureConfig()
+    await ensureConfigFile()
 
-    try {
-      const data = await fs.readFile(CONFIG_FILE, "utf8")
-      return JSON.parse(data)
-    } catch (error) {
-      console.error("Error reading site config:", error)
-      return DEFAULT_CONFIG
-    }
+    const data = await fs.readFile(CONFIG_FILE, "utf8")
+    return JSON.parse(data)
   } catch (error) {
-    console.error("Error ensuring config directory:", error)
-    return DEFAULT_CONFIG
+    console.error("Fout bij het ophalen van site configuratie:", error)
+    // Retourneer standaard configuratie bij een fout
+    return {
+      maintenanceMode: false,
+      shopClosed: false,
+      maintenancePassword: "admin123",
+    }
   }
 }
 
-// Set site maintenance mode
+// Update de onderhoudsmodus
 export async function setMaintenanceMode(enabled: boolean): Promise<SiteConfig> {
   try {
-    await ensureConfig()
+    await ensureConfigFile()
 
-    try {
-      const config = await getSiteConfig()
-      const updatedConfig = { ...config, maintenanceMode: enabled }
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
 
-      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-      return updatedConfig
-    } catch (error) {
-      console.error("Error setting maintenance mode:", error)
-      throw new Error("Failed to update site configuration")
-    }
+    // Update de onderhoudsmodus
+    config.maintenanceMode = enabled
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
   } catch (error) {
-    console.error("Error ensuring config directory:", error)
-    throw new Error("Failed to access configuration directory")
+    console.error("Fout bij het updaten van onderhoudsmodus:", error)
+    throw error
   }
 }
 
-// Set shop closed status
+// Update de webshop status
 export async function setShopClosed(closed: boolean): Promise<SiteConfig> {
   try {
-    await ensureConfig()
+    await ensureConfigFile()
 
-    try {
-      const config = await getSiteConfig()
-      const updatedConfig = { ...config, shopClosed: closed }
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
 
-      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-      return updatedConfig
-    } catch (error) {
-      console.error("Error setting shop closed status:", error)
-      throw new Error("Failed to update site configuration")
-    }
+    // Update de webshop status
+    config.shopClosed = closed
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
   } catch (error) {
-    console.error("Error ensuring config directory:", error)
-    throw new Error("Failed to access configuration directory")
+    console.error("Fout bij het updaten van webshop status:", error)
+    throw error
   }
 }
 
-// Update maintenance password
+// Update het onderhoudswachtwoord
 export async function updateMaintenancePassword(password: string): Promise<SiteConfig> {
   try {
-    await ensureConfig()
+    await ensureConfigFile()
 
-    try {
-      const config = await getSiteConfig()
-      const updatedConfig = { ...config, maintenancePassword: password }
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
 
-      await fs.writeFile(CONFIG_FILE, JSON.stringify(updatedConfig, null, 2), "utf8")
-      return updatedConfig
-    } catch (error) {
-      console.error("Error updating maintenance password:", error)
-      throw new Error("Failed to update maintenance password")
-    }
+    // Update het wachtwoord
+    config.maintenancePassword = password
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
   } catch (error) {
-    console.error("Error ensuring config directory:", error)
-    throw new Error("Failed to access configuration directory")
+    console.error("Fout bij het updaten van onderhoudswachtwoord:", error)
+    throw error
   }
 }
 

@@ -14,32 +14,33 @@ import { useToast } from "@/components/ui/use-toast"
 import { useCart } from "@/components/cart/cart-context"
 import { CartButton } from "@/components/cart/cart-button"
 import Link from "next/link"
+import { Logo } from "@/components/logo"
 
 // Product data
 const products = {
   lilac: {
     color: "lilac",
     colorName: "Lilac",
-    image: "/lilac.jpeg?height=400&width=400",
-    price: 50,
+    image: "/placeholder.svg?height=400&width=400",
+    price: 100,
   },
   "ocean-blue": {
     color: "ocean-blue",
     colorName: "Ocean Blue",
-    image: "/Blue_ocean.jpeg?height=400&width=400",
-    price: 50,
+    image: "/placeholder.svg?height=400&width=400",
+    price: 100,
   },
   burgundy: {
     color: "burgundy",
     colorName: "Burgundy",
-    image: "/red.jpeg?height=400&width=400",
-    price: 50,
+    image: "/placeholder.svg?height=400&width=400",
+    price: 100,
   },
   black: {
     color: "black",
     colorName: "Zwart",
-    image: "/zwart.jpeg?height=400&width=400",
-    price: 50,
+    image: "/placeholder.svg?height=400&width=400",
+    price: 100,
   },
 }
 
@@ -57,7 +58,7 @@ export default function ProductPage({ params }: { params: { color: string } }) {
 
   // If product not found, redirect to home
   if (!product) {
-    router.push("/")
+    router.push("/webshop")
     return null
   }
 
@@ -113,27 +114,30 @@ export default function ProductPage({ params }: { params: { color: string } }) {
   return (
     <>
       {/* Navigatie balk */}
-      <header className="border-b py-6">
+      <header className="border-b py-6 border-gray-200">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-          <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">YoungRidersOost</h1>
-          </Link>
+          <Logo />
           <div className="flex items-center gap-4 mt-4 md:mt-0">
             <nav>
               <ul className="flex space-x-6">
                 <li>
-                  <Link href="/#hoodies" className="text-muted-foreground hover:text-primary transition-colors">
-                    Hoodies
+                  <Link href="/" className="text-gray-700 hover:text-olive-600 transition-colors">
+                    Home
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#info" className="text-muted-foreground hover:text-primary transition-colors">
-                    Info
+                  <Link href="/webshop" className="text-gray-700 hover:text-olive-600 transition-colors">
+                    Webshop
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#crew" className="text-muted-foreground hover:text-primary transition-colors">
-                    Crew
+                  <Link href="/gallery" className="text-gray-700 hover:text-olive-600 transition-colors">
+                    Galerij
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/rides" className="text-gray-700 hover:text-olive-600 transition-colors">
+                    Ritten
                   </Link>
                 </li>
               </ul>
@@ -143,8 +147,12 @@ export default function ProductPage({ params }: { params: { color: string } }) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-12">
-        <Button variant="outline" onClick={() => router.push("/")} className="mb-8">
+      <div className="container mx-auto px-4 py-12 bg-white text-gray-800">
+        <Button
+          variant="outline"
+          onClick={() => router.push("/webshop")}
+          className="mb-8 border-olive-600 text-gray-800 hover:bg-olive-50"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Terug naar producten
         </Button>
@@ -157,10 +165,10 @@ export default function ProductPage({ params }: { params: { color: string } }) {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold">{product.colorName} Hoodie</h1>
-              <p className="text-muted-foreground mt-2">YoungRidersOost officiële merchandise</p>
+              <p className="text-gray-400 mt-2">YoungRidersOost officiële merchandise</p>
             </div>
 
-            <div className="text-2xl font-bold text-primary">€{product.price.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-olive-600">€{product.price.toFixed(2)}</div>
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -178,10 +186,10 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                   </Button>
                 </div>
                 <Select onValueChange={setSelectedSize} value={selectedSize}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-gray-300 text-gray-800">
                     <SelectValue placeholder="Selecteer maat" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-gray-300 text-gray-800">
                     <SelectItem value="s">S</SelectItem>
                     <SelectItem value="m">M</SelectItem>
                     <SelectItem value="l">L</SelectItem>
@@ -190,20 +198,25 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                     <SelectItem value="xxxl">XXXL</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-400">
                   Let op: Onze hoodies vallen 1 maat kleiner! Bestel 1 maat groter dan normaal. Voor over motorkleding
                   adviseren we 2 maten groter te bestellen.
                 </p>
               </div>
 
               {showSizeChart && (
-                <Card className="mt-2 mb-4">
+                <Card className="mt-2 mb-4 bg-white border-gray-200 text-gray-800">
                   <CardContent className="p-4">
                     <h3 className="text-lg font-medium mb-3">Maattabel YoungRidersOost Hoodies</h3>
-                    <div className="relative h-72 bg-background rounded-md overflow-hidden">
-                      <Image src="/size-chart.jpg" alt="Maattabel voor hoodies" fill className="object-contain" />
+                    <div className="relative h-72 bg-gray-50 rounded-md overflow-hidden">
+                      <Image
+                        src="/placeholder.svg?height=600&width=800"
+                        alt="Maattabel voor hoodies"
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-                    <p className="mt-3 text-sm text-muted-foreground">
+                    <p className="mt-3 text-sm text-gray-600">
                       Tip: Voor normaal gebruik, neem één maat groter dan je gebruikelijke maat. Voor over motorkleding,
                       neem twee maten groter.
                     </p>
@@ -221,11 +234,11 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                     size="icon"
                     onClick={decrementQuantity}
                     disabled={quantity <= 1}
-                    className="h-10 w-10 rounded-r-none transition-all duration-200 hover:bg-primary/10"
+                    className="h-10 w-10 rounded-r-none transition-all duration-200 hover:bg-olive-50 bg-white border-gray-300 text-gray-800"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <div className="h-10 px-4 flex items-center justify-center border-t border-b min-w-[60px]">
+                  <div className="h-10 px-4 flex items-center justify-center border-t border-b border-gray-300 min-w-[60px] bg-white text-gray-800">
                     <span className="text-center font-medium text-lg">{quantity}</span>
                   </div>
                   <Button
@@ -233,7 +246,7 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                     variant="outline"
                     size="icon"
                     onClick={incrementQuantity}
-                    className="h-10 w-10 rounded-l-none transition-all duration-200 hover:bg-primary/10"
+                    className="h-10 w-10 rounded-l-none transition-all duration-200 hover:bg-olive-50 bg-white border-gray-300 text-gray-800"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -248,18 +261,18 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                   className="space-y-2"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pickup" id="pickup" />
+                    <RadioGroupItem value="pickup" id="pickup" className="text-olive-600" />
                     <Label htmlFor="pickup">Ophalen (Gratis)</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="shipping" id="shipping" />
+                    <RadioGroupItem value="shipping" id="shipping" className="text-olive-600" />
                     <Label htmlFor="shipping">Verzending via Vinted GO (+€3.50)</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               {deliveryMethod === "shipping" && (
-                <Alert>
+                <Alert className="bg-gray-50 border-gray-200 text-gray-800">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Informatie over verzending</AlertTitle>
                   <AlertDescription>
@@ -271,15 +284,15 @@ export default function ProductPage({ params }: { params: { color: string } }) {
                 </Alert>
               )}
 
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-between text-lg font-bold mb-4">
                   <span>Totaalprijs:</span>
-                  <span>€{totalPrice.toFixed(2)}</span>
+                  <span className="text-olive-600">€{totalPrice.toFixed(2)}</span>
                 </div>
 
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full relative overflow-hidden group"
+                  className="w-full relative overflow-hidden group bg-olive-600 hover:bg-olive-700"
                   disabled={!selectedSize}
                   size="lg"
                 >

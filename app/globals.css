@@ -2,80 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+/* Vervang de bestaande :root variabelen met deze olijfgroene kleurenschema */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71.4% 4.1%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 220 92% 55%;
-    --primary-foreground: 210 40% 98%;
+  --primary: 82 34% 40%;
+  --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220 91% 45%;
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 82 34% 40%;
 
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
 
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220 91% 45%;
+  --accent: 82 34% 40%;
+  --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --ring: 82 34% 40%;
 
-    --radius: 0.5rem;
+  --radius: 0.5rem;
 
-    /* Custom colors */
-    --olive-50: 89 43% 97%;
-    --olive-100: 89 39% 93%;
-    --olive-200: 89 39% 86%;
-    --olive-300: 89 39% 76%;
-    --olive-400: 89 39% 66%;
-    --olive-500: 89 39% 56%;
-    --olive-600: 89 39% 46%;
-    --olive-700: 89 39% 36%;
-    --olive-800: 89 39% 26%;
-    --olive-900: 89 39% 16%;
-  }
+  /* Olive color shades */
+  --olive-50: 82 39% 95%;
+  --olive-100: 83 35% 88%;
+  --olive-200: 83 32% 78%;
+  --olive-300: 82 28% 67%;
+  --olive-400: 82 25% 57%;
+  --olive-500: 82 27% 47%;
+  --olive-600: 82 34% 40%;
+  --olive-700: 83 36% 32%;
+  --olive-800: 83 35% 25%;
+  --olive-900: 84 33% 20%;
+}
 
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 40% 98%;
+.dark {
+  --background: 224 71.4% 4.1%;
+  --foreground: 210 40% 98%;
 
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 40% 98%;
+  --card: 224 71.4% 4.1%;
+  --card-foreground: 210 40% 98%;
 
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 40% 98%;
+  --popover: 224 71.4% 4.1%;
+  --popover-foreground: 210 40% 98%;
 
-    --primary: 220 92% 55%;
-    --primary-foreground: 210 40% 98%;
+  --primary: 82 34% 40%;
+  --primary-foreground: 0 0% 98%;
 
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 40% 98%;
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 210 40% 98%;
 
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 40% 98%;
+  --accent: 215 27.9% 16.9%;
+  --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
-  }
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 216 12.2% 83.9%;
 }
 
 @layer base {
@@ -87,16 +86,100 @@
   }
 }
 
-.bg-olive-50 {
-  background-color: hsl(var(--olive-50));
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-.border-olive-200 {
-  border-color: hsl(var(--olive-200));
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
-.text-olive-700 {
-  color: hsl(var(--olive-700));
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
-.text-olive-800 {
-  color: hsl(var(--olive-800));
+
+/* Custom classes for motorcycle theme */
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Animated gradient button */
+.gradient-button {
+  background-size: 200% 200%;
+  background-image: linear-gradient(45deg, #dc2626 0%, #991b1b 50%, #dc2626 100%);
+  animation: gradient-animation 3s ease infinite;
+}
+
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Animated text */
+.text-flicker {
+  animation: flicker 3s linear infinite;
+}
+
+@keyframes flicker {
+  0%,
+  19.999%,
+  22%,
+  62.999%,
+  64%,
+  64.999%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  21.999%,
+  63%,
+  63.999%,
+  65%,
+  69.999% {
+    opacity: 0.8;
+  }
+}
+
+.bg-black-transparent {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s infinite;
 }
 

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Hoodies",
+    "slug": "hoodies",
+    "description": "",
+    "isClothing": true,
+    "sizes": [
+      "S",
+      "L",
+      "XXL",
+      "M",
+      "XL",
+      "XXXL"
+    ],
+    "active": true,
+    "id": "376e3020-fcfb-48e1-8add-68ac8d9a7d3b",
+    "createdAt": "2025-04-05T12:31:05.358Z",
+    "updatedAt": "2025-04-05T12:31:05.358Z"
+  },
+  {
+    "name": "Stickers",
+    "slug": "stickers",
+    "description": "",
+    "isClothing": false,
+    "sizes": [],
+    "active": true,
+    "id": "a5a7618b-eedb-4c21-9e51-87907f122878",
+    "createdAt": "2025-04-05T12:31:18.479Z",
+    "updatedAt": "2025-04-05T12:31:18.479Z"
+  },
+  {
+    "name": "t-shirts",
+    "slug": "t-shirts",
+    "description": "",
+    "isClothing": false,
+    "sizes": [],
+    "active": true,
+    "id": "ad1d20e5-4aa8-43d8-943f-e78b96128bfa",
+    "createdAt": "2025-04-05T12:31:26.562Z",
+    "updatedAt": "2025-04-05T12:31:26.562Z"
+  }
+]

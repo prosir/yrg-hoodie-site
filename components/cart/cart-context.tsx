@@ -1,14 +1,12 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
-// Wijzig de CartItem interface om verzendmethode toe te voegen
 export type CartItem = {
   id: string
-  color: string
-  colorName: string
-  size: string
+  productId: string
+  name: string
+  size?: string
   price: number
   quantity: number
   image: string
@@ -24,70 +22,58 @@ type CartContextType = {
   clearCart: () => void
   totalItems: number
   subtotal: number
-  shippingCost: number
+  shippingTotal: number
   total: number
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
-  const [totalItems, setTotalItems] = useState(0)
-  const [subtotal, setSubtotal] = useState(0)
-  const shippingCost = 3.5
 
-  // Load cart from localStorage on initial render
+  // Load cart from localStorage on client side
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
-      try {
+    try {
+      const savedCart = localStorage.getItem("cart")
+      if (savedCart) {
         setItems(JSON.parse(savedCart))
-      } catch (error) {
-        console.error("Failed to parse saved cart:", error)
       }
+    } catch (error) {
+      console.error("Error loading cart from localStorage:", error)
     }
   }, [])
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items))
-
-    // Calculate totals
-    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
-    setTotalItems(itemCount)
-
-    const cartSubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-    setSubtotal(cartSubtotal)
+    try {
+      localStorage.setItem("cart", JSON.stringify(items))
+    } catch (error) {
+      console.error("Error saving cart to localStorage:", error)
+    }
   }, [items])
 
-  // Update de addItem functie om verzendkosten mee te nemen
   const addItem = (newItem: CartItem) => {
-    setItems((prevItems) => {
-      // Check if item with same color, size and delivery method already exists
-      const existingItemIndex = prevItems.findIndex(
-        (item) => item.color === newItem.color && item.size === newItem.size && item.delivery === newItem.delivery,
+    setItems((prev) => {
+      // Check if the item already exists with the same product ID and size
+      const existingItemIndex = prev.findIndex(
+        (item) =>
+          item.productId === newItem.productId && item.size === newItem.size && item.delivery === newItem.delivery,
       )
 
       if (existingItemIndex >= 0) {
-        // Update quantity of existing item
-        const updatedItems = [...prevItems]
+        // Update quantity if item exists
+        const updatedItems = [...prev]
         updatedItems[existingItemIndex].quantity += newItem.quantity
         return updatedItems
       } else {
         // Add new item
-        return [
-          ...prevItems,
-          {
-            ...newItem,
-            id: `${newItem.color}-${newItem.size}-${newItem.delivery}-${Date.now()}`,
-          },
-        ]
+        return [...prev, newItem]
       }
     })
   }
 
   const removeItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== id))
+    setItems((prev) => prev.filter((item) => item.id !== id))
   }
 
   const updateQuantity = (id: string, quantity: number) => {
@@ -96,15 +82,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    setItems((prevItems) => prevItems.map((item) => (item.id === id ? { ...item, quantity } : item)))
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity } : item)))
   }
 
   const clearCart = () => {
     setItems([])
   }
 
-  // Update de total berekening om verzendkosten per item mee te nemen
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity + item.shippingCost * item.quantity, 0)
+  // Calculate totals
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const shippingTotal = items.reduce((sum, item) => sum + item.shippingCost * item.quantity, 0)
+
+  const total = subtotal + shippingTotal
 
   return (
     <CartContext.Provider
@@ -116,7 +108,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         totalItems,
         subtotal,
-        shippingCost,
+        shippingTotal,
         total,
       }}
     >
