@@ -93,7 +93,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>Komende Ritten</CardTitle>
@@ -125,37 +125,6 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <p className="text-gray-500">Geen komende ritten gepland</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recente Bestellingen</CardTitle>
-            <CardDescription>De meest recente bestellingen</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentOrders.length > 0 ? (
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center gap-4 border-b pb-4 last:border-0">
-                    <div className="rounded-full bg-olive-100 p-2">
-                      <ShoppingCart className="h-4 w-4 text-olive-600" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="font-medium">{order.customerName}</p>
-                      <p className="text-sm text-gray-500">
-                        €{order.totalAmount?.toFixed(2)} - {new Date(order.date).toLocaleDateString("nl-NL")}
-                      </p>
-                    </div>
-                    <Link href={`/admin/order-details/${order.id}`} className="text-sm text-olive-600 hover:underline">
-                      Details
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">Geen recente bestellingen</p>
             )}
           </CardContent>
         </Card>
