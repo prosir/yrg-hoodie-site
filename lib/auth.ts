@@ -45,4 +45,3 @@ export async function validateSession(sessionId: string): Promise<boolean> {
     return false
   }
 }
-// Check if the session is valid

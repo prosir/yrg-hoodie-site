@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server"
-import { getAllProducts } from "@/lib/db-products"
+import fs from "fs"
+import path from "path"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Get all products
-    const products = await getAllProducts()
+    const productsPath = path.join(process.cwd(), "data", "products.json")
 
-    // Filter for products with images and limit to 4
-    const featuredProducts = products.filter((product) => product.imageUrl).slice(0, 4)
+    if (!fs.existsSync(productsPath)) {
+      return NextResponse.json([])
+    }
 
-    return NextResponse.json(featuredProducts, { status: 200 })
+    const productsData = fs.readFileSync(productsPath, "utf8")
+    const products = JSON.parse(productsData)
+
+    // Get featured products (up to 4)
+    const featuredProducts = products.slice(0, 4)
+
+    return NextResponse.json(featuredProducts)
   } catch (error) {
     console.error("Error fetching featured products:", error)
     return NextResponse.json({ error: "Failed to fetch featured products" }, { status: 500 })

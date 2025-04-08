@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "2a246b0f-d883-4e52-bd87-7563aae2859f",
+    "title": "test",
+    "description": "test",
+    "category": "events",
+    "date": "2003-01-02",
+    "coverImage": "/uploads/albums/fa5fb434-ad83-4619-a847-6059f2583c34.png",
+    "images": [
+      {
+        "path": "/uploads/albums/fa5fb434-ad83-4619-a847-6059f2583c34.png",
+        "title": "Schermafbeelding 2023-12-20 205532",
+        "description": "",
+        "type": "image",
+        "order": 0
+      }
+    ],
+    "createdAt": "2025-04-08T19:46:19.243Z",
+    "updatedAt": "2025-04-08T19:46:19.243Z"
+  }
+]

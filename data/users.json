@@ -1,0 +1,40 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "password": "password",
+    "name": "Administrator",
+    "permissions": [
+      "dashboard",
+      "orders",
+      "rides",
+      "albums",
+      "products",
+      "categories",
+      "members",
+      "site_settings",
+      "site_images",
+      "users",
+      "whatsapp"
+    ]
+  },
+  {
+    "id": "2",
+    "username": "jacco",
+    "password": "password",
+    "name": "Jacco",
+    "permissions": [
+      "dashboard",
+      "orders",
+      "rides",
+      "albums",
+      "products",
+      "categories",
+      "members",
+      "site_settings",
+      "site_images",
+      "users",
+      "whatsapp"
+    ]
+  }
+]

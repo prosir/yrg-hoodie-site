@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server"
-import { getAllRides } from "@/lib/db-rides"
+import fs from "fs"
+import path from "path"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Get all rides
-    const allRides = await getAllRides()
+    const ridesPath = path.join(process.cwd(), "data", "rides.json")
 
-    // Get current date
-    const currentDate = new Date()
+    if (!fs.existsSync(ridesPath)) {
+      return NextResponse.json([])
+    }
 
-    // Filter for upcoming rides
-    const upcomingRides = allRides
-      .filter((ride) => {
-        const rideDate = new Date(ride.date)
-        return rideDate >= currentDate
-      })
+    const ridesData = fs.readFileSync(ridesPath, "utf8")
+    const rides = JSON.parse(ridesData)
+
+    // Filter active rides and sort by date (upcoming first)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const upcomingRides = rides
+      .filter((ride) => new Date(ride.date) >= today)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 3)
 
