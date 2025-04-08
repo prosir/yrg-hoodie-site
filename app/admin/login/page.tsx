@@ -4,9 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Inter } from "next/font/google"
-
-const inter = Inter({ subsets: ["latin"] })
+import { Logo } from "@/components/logo"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -44,16 +42,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gray-50 ${inter.className}`}>
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Admin Login</h1>
-          <p className="mt-2 text-gray-600">Sign in to access the admin dashboard</p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
+        <div className="mb-6 flex justify-center">
+          <Logo />
         </div>
+        <h1 className="mb-6 text-center text-2xl font-bold text-gray-900">Admin Login</h1>
 
-        {error && <div className="p-3 text-sm text-red-600 bg-red-100 rounded-md">{error}</div>}
+        {error && <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Username
@@ -65,7 +63,7 @@ export default function LoginPage() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
             />
           </div>
 
@@ -80,7 +78,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
             />
           </div>
 
@@ -88,9 +86,9 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Logging in..." : "Log in"}
             </button>
           </div>
         </form>
