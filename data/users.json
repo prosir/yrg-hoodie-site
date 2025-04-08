@@ -16,7 +16,8 @@
       "site_images",
       "users",
       "whatsapp"
-    ]
+    ],
+    "passwordHash": "bb705320e6a39984a6138c5b83158ee9:c58fae57cc94285821b8c819b1d30c15c647954834da128b61651094d075a918304822e7ee40d5f892a1a3fa9c53f2be16450900a91939aa0bfc921203231161"
   },
   {
     "id": "2",
@@ -35,6 +36,7 @@
       "site_images",
       "users",
       "whatsapp"
-    ]
+    ],
+    "passwordHash": "acdca205a4852a3ec9ed09136b4328ec:e3aa75fefbeb6ab2109acf50af62b64a7d920d757b02066a5ee8f2ec2491733406a7eca120c3faacf73b69a8095b3fd6ea7dabe1e8f2680b141b1b5f1b825d1b"
   }
 ]

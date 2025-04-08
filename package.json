@@ -64,7 +64,8 @@
     "uuid": "latest",
     "framer-motion": "latest",
     "bcryptjs": "latest",
-    "mysql2": "latest"
+    "mysql2": "latest",
+    "crypto": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

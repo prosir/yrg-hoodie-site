@@ -1,6 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 import { connectToDatabase, query } from "../lib/db-mysql"
+import crypto from "crypto"
 
 // Paths to JSON files
 const JSON_PATHS = {
@@ -28,6 +29,14 @@ async function readJsonFile(filePath: string) {
 // Helper function to ensure values are not undefined
 function ensureNotUndefined(value: any) {
   return value === undefined ? null : value
+}
+
+// Generate a default password hash for users with missing passwords
+function generateDefaultPasswordHash() {
+  // This creates a hash for the password "ChangeMe123!"
+  const salt = crypto.randomBytes(16).toString("hex")
+  const hash = crypto.pbkdf2Sync("ChangeMe123!", salt, 1000, 64, "sha512").toString("hex")
+  return `${salt}:${hash}`
 }
 
 // Migrate orders
@@ -304,9 +313,21 @@ async function migrateUsers() {
   await query("TRUNCATE TABLE users")
   await query("SET FOREIGN_KEY_CHECKS = 1")
 
+  let migratedCount = 0
+
   // Insert users
   for (const user of users) {
     console.log("Processing user:", user.username)
+
+    // Check for required fields
+    if (!user.id || !user.username || !user.name) {
+      console.warn(`Skipping user ${user.username || "unknown"} due to missing required fields`)
+      continue
+    }
+
+    // Use default password hash if none exists
+    const passwordHash = user.passwordHash || generateDefaultPasswordHash()
+    console.log(`User ${user.username} password hash: ${passwordHash ? "exists" : "generated default"}`)
 
     // Insert user
     const userSql = `
@@ -315,27 +336,30 @@ async function migrateUsers() {
       ) VALUES (?, ?, ?, ?)
     `
 
-    await query(userSql, [
-      ensureNotUndefined(user.id),
-      ensureNotUndefined(user.username),
-      ensureNotUndefined(user.passwordHash),
-      ensureNotUndefined(user.name),
-    ])
+    try {
+      await query(userSql, [
+        user.id,
+        user.username,
+        passwordHash, // Use the password hash or default
+        user.name,
+      ])
 
-    // Insert user permissions
-    if (user.permissions && Array.isArray(user.permissions) && user.permissions.length > 0) {
-      for (const permission of user.permissions) {
-        if (permission !== undefined && permission !== null) {
-          await query("INSERT INTO user_permissions (userId, permission) VALUES (?, ?)", [
-            ensureNotUndefined(user.id),
-            ensureNotUndefined(permission),
-          ])
+      // Insert user permissions
+      if (user.permissions && Array.isArray(user.permissions) && user.permissions.length > 0) {
+        for (const permission of user.permissions) {
+          if (permission !== undefined && permission !== null) {
+            await query("INSERT INTO user_permissions (userId, permission) VALUES (?, ?)", [user.id, permission])
+          }
         }
       }
+
+      migratedCount++
+    } catch (error) {
+      console.error(`Error migrating user ${user.username}:`, error)
     }
   }
 
-  console.log(`Migrated ${users.length} users`)
+  console.log(`Migrated ${migratedCount} users`)
 }
 
 // Migrate albums
