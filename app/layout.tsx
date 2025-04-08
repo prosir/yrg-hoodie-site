@@ -9,9 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "YoungRidersOost | Premium Motorcycle Hoodies",
-  description: "Exclusieve hoodies voor de YoungRidersOost motorclub. Ontdek onze premium collectie en rijd met stijl.",
-  generator: "v0.dev",
-}
+  description: "Exclusieve hoodies voor de YoungRidersOost motorclub. Ontdek onze premium collectie en rijd met stijl.",}
 
 export default function RootLayout({
   children,
