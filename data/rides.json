@@ -1,17 +1,1 @@
-[
-  {
-    "title": "Twente",
-    "date": "2003-01-02",
-    "time": "23:09",
-    "startLocation": "Zutphen",
-    "distance": "170",
-    "description": "",
-    "image": "/uploads/rides/0257fb04-fd85-4be3-8d96-61107d5ce252.jpg",
-    "spots": 15,
-    "active": true,
-    "requireAccessCode": false,
-    "accessCode": "",
-    "id": "3a9ca295-60a3-4d78-aa4e-b83acf97a8fc",
-    "registered": 0
-  }
-]
+[]

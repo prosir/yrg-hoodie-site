@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Logo } from "@/components/logo"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -47,9 +47,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-center text-2xl font-bold">Admin Login</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md border border-gray-200">
+        <div className="flex justify-center mb-6">
+          <Logo />
+        </div>
+        <h1 className="mb-6 text-center text-2xl font-bold text-olive-600">Admin Login</h1>
 
         {success ? (
           <div className="mb-4 rounded-md bg-green-100 p-4 text-green-700">Login successful! Redirecting...</div>
@@ -66,7 +69,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-olive-500 focus:outline-none focus:ring-olive-500"
                 required
               />
             </div>
@@ -80,7 +83,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-olive-500 focus:outline-none focus:ring-olive-500"
                 required
               />
             </div>
@@ -88,7 +91,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300"
+              className="w-full rounded-md bg-olive-600 px-4 py-2 text-white hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:ring-offset-2 disabled:bg-olive-300"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

@@ -13,7 +13,9 @@ import {
   ImageIcon,
   ShieldAlert,
   MessageSquare,
+  LogOut,
 } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 export function AdminSidebar() {
   const pathname = usePathname()
@@ -80,25 +82,46 @@ export function AdminSidebar() {
     },
   ]
 
+  const handleLogout = async () => {
+    await fetch("/api/admin/logout", {
+      method: "POST",
+    })
+    window.location.href = "/admin/login"
+  }
+
   return (
-    <div className="w-64 bg-gray-100 h-full overflow-y-auto border-r">
+    <div className="w-64 bg-white h-full overflow-y-auto border-r border-gray-200 shadow-sm">
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex justify-center mb-4">
+          <Logo />
+        </div>
+        <h1 className="text-xl font-bold text-center text-olive-600">Admin Panel</h1>
+      </div>
       <div className="p-4">
-        <h1 className="text-xl font-bold mb-4">Admin Panel</h1>
         <nav className="space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center px-4 py-2 text-sm rounded-md ${
+              className={`flex items-center px-4 py-2 text-sm rounded-md transition-colors ${
                 isActive(item.href)
-                  ? "bg-gray-200 text-gray-900"
-                  : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+                  ? "bg-olive-100 text-olive-700 font-medium"
+                  : "text-gray-600 hover:bg-olive-50 hover:text-olive-600"
               }`}
             >
-              {item.icon}
-              <span className="ml-3">{item.title}</span>
+              <span className={`mr-3 ${isActive(item.href) ? "text-olive-600" : "text-gray-500"}`}>{item.icon}</span>
+              <span>{item.title}</span>
             </Link>
           ))}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center px-4 py-2 text-sm rounded-md text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors mt-4"
+          >
+            <span className="mr-3 text-gray-500">
+              <LogOut className="h-4 w-4" />
+            </span>
+            <span>Uitloggen</span>
+          </button>
         </nav>
       </div>
     </div>

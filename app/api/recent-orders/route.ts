@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server"
 import { getAllOrders } from "@/lib/db"
-import { verifySession } from "@/lib/auth"
+import { cookies } from "next/headers"
+import { validateSession } from "@/lib/auth"
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Verify the user is authenticated using the project's auth system
-    const session = await verifySession(request)
-    if (!session) {
+    // Check if user is authenticated using the project's auth system
+    const sessionCookie = cookies().get("session")?.value
+    const isAuthenticated = sessionCookie ? await validateSession(sessionCookie) : false
+
+    // Only allow authenticated users to see recent orders
+    if (!isAuthenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -18,7 +22,8 @@ export async function GET(request: Request) {
       return new Date(b.date).getTime() - new Date(a.date).getTime()
     })
 
-    return NextResponse.json(sortedOrders)
+    // Return the 10 most recent orders
+    return NextResponse.json(sortedOrders.slice(0, 10), { status: 200 })
   } catch (error) {
     console.error("Error fetching recent orders:", error)
     return NextResponse.json({ error: "Failed to fetch recent orders" }, { status: 500 })
