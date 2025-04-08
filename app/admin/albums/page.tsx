@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, Edit, Trash2, Image, Calendar, Tag } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, Film, ImageIcon } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
@@ -17,17 +16,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Album } from "@/lib/db-albums"
+import { MotorcycleLoader } from "@/components/motorcycle-loader"
+import { format } from "date-fns"
+import { nl } from "date-fns/locale"
+
+interface AlbumMedia {
+  path: string
+  title: string
+  description: string
+  type: "image" | "video"
+  order: number
+}
+
+interface Album {
+  id: string
+  title: string
+  description: string
+  category: string
+  date: string
+  coverImage: string
+  images: AlbumMedia[]
+}
 
 export default function AlbumsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [albums, setAlbums] = useState<Album[]>([])
-  const [loading, setLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [albumToDelete, setAlbumToDelete] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("all")
 
   useEffect(() => {
     fetchAlbums()
@@ -35,7 +52,7 @@ export default function AlbumsPage() {
 
   const fetchAlbums = async () => {
     try {
-      setLoading(true)
+      setIsLoading(true)
       const response = await fetch("/api/albums")
 
       if (!response.ok) {
@@ -48,11 +65,11 @@ export default function AlbumsPage() {
       console.error("Error fetching albums:", error)
       toast({
         title: "Fout bij ophalen",
-        description: "Er is een fout opgetreden bij het ophalen van de albums.",
+        description: "De albums konden niet worden opgehaald.",
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -61,7 +78,7 @@ export default function AlbumsPage() {
     setDeleteDialogOpen(true)
   }
 
-  const handleDeleteConfirm = async () => {
+  const confirmDelete = async () => {
     if (!albumToDelete) return
 
     try {
@@ -84,7 +101,7 @@ export default function AlbumsPage() {
       console.error("Error deleting album:", error)
       toast({
         title: "Fout bij verwijderen",
-        description: "Er is een fout opgetreden bij het verwijderen van het album.",
+        description: "Het album kon niet worden verwijderd.",
         variant: "destructive",
       })
     } finally {
@@ -93,15 +110,49 @@ export default function AlbumsPage() {
     }
   }
 
-  const filteredAlbums = activeTab === "all" ? albums : albums.filter((album) => album.category === activeTab)
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case "rides":
+        return "Ritten"
+      case "events":
+        return "Evenementen"
+      case "members":
+        return "Leden"
+      case "other":
+        return "Overig"
+      default:
+        return category
+    }
+  }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat("nl-NL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date)
+    try {
+      return format(new Date(dateString), "d MMMM yyyy", { locale: nl })
+    } catch (error) {
+      return dateString
+    }
+  }
+
+  const countMediaByType = (images: AlbumMedia[]) => {
+    const counts = {
+      image: 0,
+      video: 0,
+    }
+
+    images.forEach((item) => {
+      if (item.type === "image") counts.image++
+      if (item.type === "video") counts.video++
+    })
+
+    return counts
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <MotorcycleLoader />
+      </div>
+    )
   }
 
   return (
@@ -114,81 +165,94 @@ export default function AlbumsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">Alle Albums</TabsTrigger>
-          <TabsTrigger value="rides">Ritten</TabsTrigger>
-          <TabsTrigger value="events">Evenementen</TabsTrigger>
-          <TabsTrigger value="members">Leden</TabsTrigger>
-          <TabsTrigger value="other">Overig</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-0">
-          {loading ? (
-            <div className="text-center py-10">
-              <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">Albums laden...</p>
+      {albums.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="rounded-full bg-gray-100 p-3 mb-4">
+              <ImageIcon className="h-8 w-8 text-gray-400" />
             </div>
-          ) : filteredAlbums.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAlbums.map((album) => (
-                <Card key={album.id} className="overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden bg-gray-100">
-                    {album.coverImage ? (
-                      <img
-                        src={album.coverImage || "/placeholder.svg"}
-                        alt={album.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <Image className="h-16 w-16 text-gray-400" />
-                      </div>
-                    )}
+            <h3 className="text-lg font-medium mb-2">Geen albums gevonden</h3>
+            <p className="text-gray-500 text-center mb-6">
+              Er zijn nog geen albums aangemaakt. Maak je eerste album aan om foto's en video's te delen.
+            </p>
+            <Button onClick={() => router.push("/admin/albums/create")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nieuw Album
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {albums.map((album) => {
+            const mediaCounts = countMediaByType(album.images)
+
+            return (
+              <Card key={album.id} className="overflow-hidden">
+                <div className="relative h-48">
+                  <img
+                    src={album.coverImage || "/placeholder.svg?height=300&width=500"}
+                    alt={album.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md">
+                    {getCategoryLabel(album.category)}
                   </div>
-                  <CardHeader>
-                    <CardTitle>{album.title}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(album.date)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground capitalize">{album.category}</span>
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle>{album.title}</CardTitle>
+                  <CardDescription>{formatDate(album.date)}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{album.description}</p>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center text-xs text-gray-500">
+                        <ImageIcon className="h-3 w-3 mr-1" />
+                        {mediaCounts.image}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Film className="h-3 w-3 mr-1" />
+                        {mediaCounts.video}
+                      </div>
                     </div>
-                    <p className="text-sm line-clamp-2">{album.description}</p>
-                    <div className="mt-2 text-sm text-muted-foreground">{album.images?.length || 0} foto's</div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/admin/albums/${album.id}`}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Bewerken
-                      </Link>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => router.push(`/admin/albums/view/${album.id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Bekijken
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(album.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => router.push(`/admin/albums/edit/${album.id}`)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Bewerken
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-red-500 hover:text-red-700"
+                      onClick={() => handleDeleteClick(album.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
                       Verwijderen
                     </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-10 border border-dashed rounded-lg">
-              <Image className="h-16 w-16 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">Geen albums gevonden</h3>
-              <p className="mt-1 text-muted-foreground">Er zijn nog geen albums in deze categorie.</p>
-              <Button onClick={() => router.push("/admin/albums/create")} className="mt-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Nieuw Album
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -200,7 +264,7 @@ export default function AlbumsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuleren</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
               Verwijderen
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -209,4 +273,3 @@ export default function AlbumsPage() {
     </div>
   )
 }
-

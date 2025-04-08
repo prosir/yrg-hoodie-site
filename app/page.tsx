@@ -38,6 +38,7 @@ export default function Home() {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
     homeHeroImage: "/placeholder.svg?height=1080&width=1920",
   })
+  const [recentOrders, setRecentOrders] = useState<any[]>([])
 
   useEffect(() => {
     setIsMounted(true)
@@ -62,6 +63,13 @@ export default function Home() {
         const ridesResponse = await fetch("/api/featured-rides")
         const ridesData = await ridesResponse.json()
         setRides(ridesData)
+
+        // Fetch recent orders
+        const ordersResponse = await fetch("/api/recent-orders")
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json()
+          setRecentOrders(ordersData)
+        }
       } catch (error) {
         console.error("Error fetching data for homepage:", error)
       } finally {
@@ -363,6 +371,74 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Recent Orders Section - Only visible for crew members */}
+      {recentOrders.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-800">
+                RECENTE <span className="text-olive-600">BESTELLINGEN</span>
+              </h2>
+              <Link href="/admin/orders" className="text-olive-600 hover:text-olive-700 font-medium flex items-center">
+                Alle bestellingen bekijken
+                <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Order ID
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Naam
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Datum
+                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {recentOrders.slice(0, 5).map((order, index) => (
+                    <tr key={order.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="py-3 px-4 text-sm text-gray-900">{order.orderId}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{order.name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{order.colorName || order.color}</td>
+                      <td className="py-3 px-4 text-sm text-gray-900">{new Date(order.date).toLocaleDateString()}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            order.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : order.status === "processing"
+                                ? "bg-blue-100 text-blue-800"
+                                : order.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ImageIcon, Save, Trash2, Check, Film, Edit, ImageIcon as ImageLucide } from "lucide-react"
+import { ImageIcon, Save, Trash2, Check, Film, Edit, ImageIcon as ImageLucide, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { saveBase64Image } from "@/lib/image-upload"
 import {
@@ -21,10 +21,32 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { MotorcycleLoader } from "@/components/motorcycle-loader"
 
-export default function CreateAlbum() {
+interface AlbumMedia {
+  id?: string
+  path: string
+  title: string
+  description: string
+  type: "image" | "video"
+  order: number
+}
+
+interface Album {
+  id: string
+  title: string
+  description: string
+  category: string
+  date: string
+  coverImage: string
+  images: AlbumMedia[]
+}
+
+export default function EditAlbum({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [album, setAlbum] = useState<Album | null>(null)
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
@@ -37,6 +59,8 @@ export default function CreateAlbum() {
       type: "image" | "video"
       title: string
       description: string
+      path?: string
+      isExisting?: boolean
       uploading?: boolean
       uploaded?: boolean
     }[]
@@ -50,6 +74,53 @@ export default function CreateAlbum() {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const fetchAlbum = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/albums/${params.id}`)
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch album")
+        }
+
+        const albumData = await response.json()
+        setAlbum(albumData)
+
+        // Set form values
+        setTitle(albumData.title)
+        setCategory(albumData.category)
+        setDescription(albumData.description)
+        setDate(albumData.date)
+
+        // Set media
+        const mediaItems = albumData.images.map((image: AlbumMedia) => ({
+          id: image.id || `existing-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          file: null,
+          preview: image.path,
+          type: image.type,
+          title: image.title,
+          description: image.description,
+          path: image.path,
+          isExisting: true,
+        }))
+
+        setMedia(mediaItems)
+      } catch (error) {
+        console.error("Error fetching album:", error)
+        toast({
+          title: "Fout bij ophalen",
+          description: "Het album kon niet worden opgehaald.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAlbum()
+  }, [params.id, toast])
 
   const handleAddImage = () => {
     if (fileInputRef.current) {
@@ -72,7 +143,7 @@ export default function CreateAlbum() {
       const id = Date.now().toString() + Math.random().toString(36).substring(2, 9)
 
       // Create object URL for preview
-      const preview = URL.createObjectURL(file)
+      const preview = type === "image" ? URL.createObjectURL(file) : URL.createObjectURL(file)
 
       setMedia((prev) => [
         ...prev,
@@ -175,13 +246,22 @@ export default function CreateAlbum() {
     setIsSubmitting(true)
 
     try {
-      // Upload all media first
+      // Upload all new media first
       const uploadedMedia = []
 
       for (let i = 0; i < media.length; i++) {
         const item = media[i]
 
-        if (item.file) {
+        if (item.isExisting) {
+          // Add existing media to the array
+          uploadedMedia.push({
+            path: item.path,
+            title: item.title,
+            description: item.description,
+            type: item.type,
+            order: i,
+          })
+        } else if (item.file) {
           // Update status to uploading
           setMedia((prev) => prev.map((m) => (m.id === item.id ? { ...m, uploading: true } : m)))
 
@@ -204,11 +284,11 @@ export default function CreateAlbum() {
 
       // Find the first image to use as cover
       const firstImage = uploadedMedia.find((item) => item.type === "image")
-      const coverImage = firstImage ? firstImage.path : ""
+      const coverImage = firstImage ? firstImage.path : album?.coverImage || ""
 
-      // Create the album with the uploaded media
-      const response = await fetch("/api/albums", {
-        method: "POST",
+      // Update the album with the uploaded media
+      const response = await fetch(`/api/albums/${params.id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -223,23 +303,21 @@ export default function CreateAlbum() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create album")
+        throw new Error("Failed to update album")
       }
 
-      const album = await response.json()
-
       toast({
-        title: "Album aangemaakt",
-        description: "Het album is succesvol aangemaakt.",
+        title: "Album bijgewerkt",
+        description: "Het album is succesvol bijgewerkt.",
       })
 
       // Redirect to albums page
       router.push("/admin/albums")
     } catch (error) {
-      console.error("Error creating album:", error)
+      console.error("Error updating album:", error)
       toast({
-        title: "Fout bij aanmaken",
-        description: "Er is een fout opgetreden bij het aanmaken van het album.",
+        title: "Fout bij bijwerken",
+        description: "Er is een fout opgetreden bij het bijwerken van het album.",
         variant: "destructive",
       })
     } finally {
@@ -247,10 +325,23 @@ export default function CreateAlbum() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <MotorcycleLoader />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Nieuw Album Aanmaken</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => router.push("/admin/albums")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">Album Bewerken</h1>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -258,7 +349,7 @@ export default function CreateAlbum() {
           <Card>
             <CardHeader>
               <CardTitle>Album Informatie</CardTitle>
-              <CardDescription>Vul de basisgegevens van het album in.</CardDescription>
+              <CardDescription>Bewerk de basisgegevens van het album.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -309,7 +400,7 @@ export default function CreateAlbum() {
           <Card>
             <CardHeader>
               <CardTitle>Media</CardTitle>
-              <CardDescription>Voeg foto's en video's toe aan het album.</CardDescription>
+              <CardDescription>Bewerk foto's en video's in het album.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
@@ -443,7 +534,7 @@ export default function CreateAlbum() {
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Album Aanmaken
+                Album Bijwerken
               </>
             )}
           </Button>
