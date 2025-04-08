@@ -1,10 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from 'next/font/google'
+import { Inter } from "next/font/google"
 import { AdminSidebar } from "@/components/admin-sidebar"
-import { cookies } from "next/headers"
-import { validateSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { getSession } from "@/lib/auth"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -18,21 +17,11 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Check if the current path is the login page
-  const isLoginPage = children.toString().includes("LoginPage")
-  
-  // If on login page, don't check authentication
-  if (isLoginPage) {
-    return <div className={`min-h-screen bg-gray-50 ${inter.className}`}>{children}</div>
-  }
-  
   // Check if user is logged in
-  const cookieStore = cookies()
-  const sessionCookie = cookieStore.get("session")?.value
-  const isAuthenticated = sessionCookie ? await validateSession(sessionCookie) : false
+  const session = await getSession()
 
   // If not authenticated, redirect to login
-  if (!isAuthenticated) {
+  if (!session) {
     redirect("/admin/login")
   }
 

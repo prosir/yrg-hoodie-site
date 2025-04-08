@@ -23,8 +23,11 @@ export type UserWithPassword = Omit<User, "passwordHash"> & {
 // User without sensitive data for client
 export type SafeUser = Omit<User, "passwordHash">
 
-// Available permissions
-export const availablePermissions = [
+// Path to the JSON file for storage
+const DATA_FILE = path.join(process.cwd(), "data", "users.json")
+
+// Available permissions - moved to a separate client-side file
+const permissionsData = [
   { id: "dashboard", label: "Dashboard" },
   { id: "orders", label: "Bestellingen" },
   { id: "rides", label: "Ritten" },
@@ -37,9 +40,6 @@ export const availablePermissions = [
   { id: "users", label: "Gebruikers" },
   { id: "whatsapp", label: "WhatsApp" },
 ]
-
-// Path to the JSON file for storage
-const DATA_FILE = path.join(process.cwd(), "data", "users.json")
 
 // Ensure the data directory exists
 async function ensureDataDirectory() {
@@ -64,7 +64,7 @@ async function ensureDataDirectory() {
       id: uuidv4(),
       username: "admin",
       passwordHash: await bcrypt.hash("youngriders2025", 10),
-      permissions: availablePermissions.map((p) => p.id),
+      permissions: permissionsData.map((p) => p.id),
       createdAt: new Date().toISOString(),
     }
 
@@ -89,6 +89,11 @@ export async function getAllUsers(): Promise<SafeUser[]> {
     console.error("Error fetching users:", error)
     return []
   }
+}
+
+// Get available permissions
+export async function getAvailablePermissions() {
+  return permissionsData
 }
 
 // Get user by ID

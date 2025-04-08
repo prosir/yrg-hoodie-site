@@ -15,7 +15,6 @@ import {
   MessageSquare,
   LogOut,
 } from "lucide-react"
-import { Logo } from "@/components/logo"
 
 export function AdminSidebar() {
   const pathname = usePathname()
@@ -92,9 +91,6 @@ export function AdminSidebar() {
   return (
     <div className="w-64 bg-white h-full overflow-y-auto border-r border-gray-200 shadow-sm">
       <div className="p-4 border-b border-gray-200">
-        <div className="flex justify-center mb-4">
-          <Logo />
-        </div>
         <h1 className="text-xl font-bold text-center text-olive-600">Admin Panel</h1>
       </div>
       <div className="p-4">

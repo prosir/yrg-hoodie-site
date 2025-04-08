@@ -6,7 +6,8 @@ import { validateSession } from "@/lib/auth"
 export async function GET() {
   try {
     // Check if user is authenticated using the project's auth system
-    const sessionCookie = cookies().get("session")?.value
+    const cookieStore = cookies()
+    const sessionCookie = cookieStore.get("admin_session")?.value
     const isAuthenticated = sessionCookie ? await validateSession(sessionCookie) : false
 
     // Only allow authenticated users to see recent orders

@@ -1,54 +1,39 @@
 "use server"
 
-import { writeFile, mkdir } from "fs/promises"
+import fs from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
 
-// Functie om een base64 afbeelding op te slaan
-export async function saveBase64Image(base64Image: string, folder = "rides"): Promise<string> {
+async function saveBase64Image(base64String: string, folder: string): Promise<string> {
   try {
-    // Verwijder het "data:image/..." deel van de base64 string
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "")
+    // Extract base64 data en bestands type
+    const base64Data = base64String.split(",")[1]
+    const fileType = base64String.split(";")[0].split(":")[1]
 
     // Genereer een unieke bestandsnaam
-    const fileName = `${uuidv4()}.jpg`
+    const filename = `${uuidv4()}.${fileType.split("/")[1]}`
 
-    // Maak het pad naar de map waar de afbeelding moet worden opgeslagen
-    const uploadDir = path.join(process.cwd(), "public", "uploads", folder)
+    // Definieer het uploadpad
+    const uploadPath = path.join(process.cwd(), "public", "uploads", folder, filename)
 
-    // Zorg ervoor dat de map bestaat
-    await mkdir(uploadDir, { recursive: true })
+    // Zorg ervoor dat de directory bestaat
+    const uploadDir = path.dirname(uploadPath)
+    try {
+      await fs.access(uploadDir)
+    } catch (error) {
+      await fs.mkdir(uploadDir, { recursive: true })
+    }
 
-    // Sla de afbeelding op
-    const filePath = path.join(uploadDir, fileName)
-    await writeFile(filePath, Buffer.from(base64Data, "base64"))
+    // Schrijf het bestand
+    const buffer = Buffer.from(base64Data, "base64")
+    await fs.writeFile(uploadPath, buffer)
 
-    // Geef het pad terug dat in de frontend kan worden gebruikt
-    return `/uploads/${folder}/${fileName}`
+    // Retourneer het pad naar het bestand
+    return `/uploads/${folder}/${filename}`
   } catch (error) {
-    console.error("Fout bij het opslaan van de afbeelding:", error)
-    throw new Error("Kon de afbeelding niet opslaan")
+    console.error("Fout bij het opslaan van de base64 afbeelding:", error)
+    throw new Error("Fout bij het opslaan van de base64 afbeelding")
   }
 }
 
-// Functie om een afbeelding te verwijderen
-export async function deleteImage(imagePath: string): Promise<void> {
-  try {
-    // Verwijder het eerste "/" karakter als dat aanwezig is
-    const normalizedPath = imagePath.startsWith("/") ? imagePath.substring(1) : imagePath
-
-    // Maak het volledige pad naar de afbeelding
-    const fullPath = path.join(process.cwd(), "public", normalizedPath)
-
-    // Controleer of het bestand bestaat
-    const { access, unlink } = await import("fs/promises")
-    await access(fullPath)
-
-    // Verwijder het bestand
-    await unlink(fullPath)
-  } catch (error) {
-    console.error(`Fout bij het verwijderen van afbeelding ${imagePath}:`, error)
-    throw new Error("Kon de afbeelding niet verwijderen")
-  }
-}
-
+export { saveBase64Image }

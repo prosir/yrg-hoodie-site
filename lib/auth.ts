@@ -1,10 +1,13 @@
-import { cookies } from "next/headers"
+"use server"
 
-export async function createSession(username: string) {
-  // Create a simple session cookie
+import { cookies } from "next/headers"
+import { getUserById } from "./db-users"
+
+// Create a new session
+export async function createSession(userId: string) {
   cookies().set({
     name: "admin_session",
-    value: username,
+    value: userId,
     httpOnly: true,
     path: "/",
     secure: process.env.NODE_ENV === "production",
@@ -12,11 +15,26 @@ export async function createSession(username: string) {
   })
 }
 
+// Get the current session
 export async function getSession() {
-  const sessionCookie = cookies().get("admin_session")
-  return sessionCookie?.value
+  // In Next.js 14, cookies() doesn't need to be awaited
+  // but we need to use it directly without storing in a variable
+  const sessionId = cookies().get("admin_session")?.value
+  if (!sessionId) return null
+
+  const user = await getUserById(sessionId)
+  return user
 }
 
+// Validate the session
+export async function validateSession(sessionId: string) {
+  if (!sessionId) return false
+
+  const user = await getUserById(sessionId)
+  return !!user
+}
+
+// Clear the session
 export async function clearSession() {
   cookies().delete("admin_session")
 }
