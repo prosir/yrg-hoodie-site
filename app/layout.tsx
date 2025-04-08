@@ -5,6 +5,12 @@ import "./globals.css"
 import { CartProvider } from "@/components/cart/cart-context"
 import { SiteNavbar } from "@/components/site-navbar"
 import { SiteFooter } from "@/components/site-footer"
+import { connectToDatabase } from "@/lib/db-mysql"
+
+// Initialize database connection
+if (process.env.USE_MYSQL === "true" || process.env.NODE_ENV === "production") {
+  connectToDatabase().catch(console.error)
+}
 
 const inter = Inter({ subsets: ["latin"] })
 

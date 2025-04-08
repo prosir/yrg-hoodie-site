@@ -1,20 +1,19 @@
 "use server"
 
+import { v4 as uuidv4 } from "uuid"
 import fs from "fs/promises"
 import path from "path"
-import { v4 as uuidv4 } from "uuid"
-// At the top of the file, import the DB_CONFIG
-import { DB_CONFIG } from "./db-config"
+import { query } from "./db-mysql"
 
 export type Order = {
   id: string
-  orderId: string // Gemeenschappelijk order ID voor groepsbestellingen
+  orderId: string
   name: string
   email: string
   phone: string
   address: string
   color: string
-  colorName?: string // Toegevoegd voor weergave in bestellijst
+  colorName?: string
   size: string
   delivery: "pickup" | "shipping"
   notes?: string
@@ -25,99 +24,74 @@ export type Order = {
   orderedFromSupplier?: boolean
   trackingNumber?: string
   trackingSent?: boolean
-  quantity: number // Toegevoegd quantity veld
+  quantity: number
 }
 
-// Pad naar het JSON-bestand voor opslag
+// Determine if we should use MySQL or JSON files
+const useMySQL = process.env.USE_MYSQL === "true" || process.env.NODE_ENV === "production"
+
+// Path to JSON file (for development/fallback)
 const DATA_FILE = path.join(process.cwd(), "data", "orders.json")
 
-// Zorg ervoor dat de data directory bestaat
+// Ensure data directory exists (for development/fallback)
 async function ensureDataDirectory() {
+  if (useMySQL) return // Skip if using MySQL
+
   const dataDir = path.join(process.cwd(), "data")
   try {
     await fs.access(dataDir)
   } catch (error) {
-    // Als de directory niet bestaat, maak deze aan
-    console.log("Data directory bestaat niet, wordt aangemaakt...")
+    console.log("Data directory does not exist, creating...")
     await fs.mkdir(dataDir, { recursive: true })
   }
 
-  // Controleer of het bestand bestaat, zo niet, maak het aan
   try {
     await fs.access(DATA_FILE)
   } catch (error) {
-    // Als het bestand niet bestaat, maak een nieuw bestand met een lege array
-    console.log("Orders.json bestand bestaat niet, wordt aangemaakt...")
+    console.log("Orders.json file does not exist, creating...")
     await fs.writeFile(DATA_FILE, JSON.stringify([]), "utf8")
   }
 }
 
-// Add this function to determine if we should use database or JSON
-async function shouldUseDatabase() {
-  return DB_CONFIG.useDatabase && !!DB_CONFIG.databaseUrl
-}
-
-// Lees alle bestellingen uit het bestand
-// Modify the getAllOrders function to check if we should use database
+// Get all orders
 export async function getAllOrders(): Promise<Order[]> {
   try {
-    // Check if we should use database in production
-    if (await shouldUseDatabase()) {
-      // Use database connection
-      // This is a placeholder - you'll need to implement actual database queries
-      console.log("Using database for getAllOrders")
-
-      // Example using a hypothetical database client
-      // const db = await getDbConnection();
-      // const orders = await db.collection('orders').find().toArray();
-      // return orders;
-
-      // For now, return empty array to prevent errors
-      return []
-    }
-
-    // Otherwise use JSON files (development mode)
-    await ensureDataDirectory()
-
-    try {
+    if (useMySQL) {
+      // Use MySQL
+      const results = (await query("SELECT * FROM orders ORDER BY date DESC")) as Order[]
+      return results
+    } else {
+      // Use JSON files
+      await ensureDataDirectory()
       const data = await fs.readFile(DATA_FILE, "utf8")
       const orders = JSON.parse(data)
 
-      // Voeg quantity toe aan bestaande orders die het veld nog niet hebben
+      // Add quantity to existing orders that don't have it
       const updatedOrders = orders.map((order: any) => ({
         ...order,
-        quantity: order.quantity || 1, // Default naar 1 als quantity niet bestaat
+        quantity: order.quantity || 1,
       }))
 
       return updatedOrders
-    } catch (error) {
-      // Als het bestand niet bestaat, maak een nieuw bestand met een lege array
-      await fs.writeFile(DATA_FILE, JSON.stringify([]), "utf8")
-      return []
     }
   } catch (error) {
-    console.error("Fout bij het ophalen van bestellingen:", error)
+    console.error("Error getting orders:", error)
     return []
   }
 }
 
-// Voeg een nieuwe bestelling toe
+// Add a new order
 export async function addOrder(
   orderData: Omit<Order, "id" | "orderId"> & { quantity?: number },
   orderId?: string,
 ): Promise<Order> {
   try {
-    // Zorg ervoor dat de data directory en bestand bestaan
-    await ensureDataDirectory()
-
-    // Genereer een uniek ID voor de nieuwe bestelling
+    // Generate a unique ID for the new order
     const newOrderId =
       orderId ||
       `ORDER-${Math.floor(Math.random() * 10000)
         .toString()
         .padStart(4, "0")}`
-
-    // Zorg ervoor dat quantity altijd een waarde heeft (default naar 1)
     const quantity = orderData.quantity || 1
 
     const newOrder: Order = {
@@ -127,231 +101,331 @@ export async function addOrder(
       quantity: quantity,
     }
 
-    console.log("Nieuwe bestelling aangemaakt:", newOrder)
+    if (useMySQL) {
+      // Use MySQL
+      const sql = `
+        INSERT INTO orders (
+          id, orderId, name, email, phone, address, color, colorName, 
+          size, delivery, notes, price, status, date, isCrew, 
+          orderedFromSupplier, trackingNumber, trackingSent, quantity
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
 
-    // Haal bestaande bestellingen op
-    let orders: Order[] = []
-    try {
-      const data = await fs.readFile(DATA_FILE, "utf8")
-      orders = JSON.parse(data)
-      console.log(`Bestaande bestellingen geladen, aantal: ${orders.length}`)
-    } catch (error) {
-      console.error("Fout bij het lezen van bestellingen:", error)
-      // Als er een fout is bij het lezen, maak een nieuwe lege array
-      orders = []
+      await query(sql, [
+        newOrder.id,
+        newOrder.orderId,
+        newOrder.name,
+        newOrder.email,
+        newOrder.phone,
+        newOrder.address,
+        newOrder.color,
+        newOrder.colorName || null,
+        newOrder.size,
+        newOrder.delivery,
+        newOrder.notes || null,
+        newOrder.price,
+        newOrder.status,
+        newOrder.date,
+        newOrder.isCrew || false,
+        newOrder.orderedFromSupplier || false,
+        newOrder.trackingNumber || null,
+        newOrder.trackingSent || false,
+        newOrder.quantity,
+      ])
+    } else {
+      // Use JSON files
+      await ensureDataDirectory()
+
+      // Get existing orders
+      let orders: Order[] = []
+      try {
+        const data = await fs.readFile(DATA_FILE, "utf8")
+        orders = JSON.parse(data)
+      } catch (error) {
+        console.error("Error reading orders:", error)
+        orders = []
+      }
+
+      // Add the new order
+      orders.push(newOrder)
+
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
     }
-
-    // Voeg de nieuwe bestelling toe
-    orders.push(newOrder)
-
-    // Debug log om te zien of we hier komen
-    console.log("Bestellingen bijgewerkt, totaal aantal:", orders.length)
-    console.log("Bestelling wordt weggeschreven naar:", DATA_FILE)
-
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
-    console.log("Bestelling succesvol opgeslagen in orders.json")
 
     return newOrder
   } catch (error) {
-    console.error("Fout bij het toevoegen van bestelling:", error)
-    throw new Error(`Kon bestelling niet opslaan: ${error instanceof Error ? error.message : String(error)}`)
+    console.error("Error adding order:", error)
+    throw new Error(`Could not save order: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 
-// Haal bestellingen op basis van orderId
+// Get orders by orderId
 export async function getOrdersByOrderId(orderId: string): Promise<Order[]> {
   try {
-    const orders = await getAllOrders()
-    const matchingOrders = orders.filter((order) => order.orderId === orderId)
-
-    // Expandeer orders op basis van quantity
-    const expandedOrders: Order[] = []
-
-    for (const order of matchingOrders) {
-      // Als er een quantity is, maak het juiste aantal kopieën
-      const quantity = order.quantity || 1
-
-      // Voeg het originele order toe met de juiste quantity
-      expandedOrders.push(order)
+    if (useMySQL) {
+      // Use MySQL
+      const results = (await query("SELECT * FROM orders WHERE orderId = ?", [orderId])) as Order[]
+      return results
+    } else {
+      // Use JSON files
+      const orders = await getAllOrders()
+      return orders.filter((order) => order.orderId === orderId)
     }
-
-    return expandedOrders
   } catch (error) {
-    console.error("Fout bij het ophalen van bestellingen op orderId:", error)
+    console.error("Error getting orders by orderId:", error)
     return []
   }
 }
 
-// Bereken totaalbedrag voor een orderId
+// Calculate total for an orderId
 export async function getOrderTotal(orderId: string): Promise<number> {
   try {
     const orders = await getOrdersByOrderId(orderId)
     return orders.reduce((total, order) => total + order.price * (order.quantity || 1), 0)
   } catch (error) {
-    console.error("Fout bij het berekenen van totaalbedrag:", error)
+    console.error("Error calculating order total:", error)
     return 0
   }
 }
 
-// Update een bestaande bestelling
+// Update an existing order
 export async function updateOrder(updatedOrder: Order): Promise<Order> {
   try {
-    await ensureDataDirectory()
+    if (useMySQL) {
+      // Use MySQL
+      const sql = `
+        UPDATE orders SET
+          orderId = ?,
+          name = ?,
+          email = ?,
+          phone = ?,
+          address = ?,
+          color = ?,
+          colorName = ?,
+          size = ?,
+          delivery = ?,
+          notes = ?,
+          price = ?,
+          status = ?,
+          date = ?,
+          isCrew = ?,
+          orderedFromSupplier = ?,
+          trackingNumber = ?,
+          trackingSent = ?,
+          quantity = ?
+        WHERE id = ?
+      `
 
-    // Haal bestaande bestellingen op
-    const orders = await getAllOrders()
+      await query(sql, [
+        updatedOrder.orderId,
+        updatedOrder.name,
+        updatedOrder.email,
+        updatedOrder.phone,
+        updatedOrder.address,
+        updatedOrder.color,
+        updatedOrder.colorName || null,
+        updatedOrder.size,
+        updatedOrder.delivery,
+        updatedOrder.notes || null,
+        updatedOrder.price,
+        updatedOrder.status,
+        updatedOrder.date,
+        updatedOrder.isCrew || false,
+        updatedOrder.orderedFromSupplier || false,
+        updatedOrder.trackingNumber || null,
+        updatedOrder.trackingSent || false,
+        updatedOrder.quantity,
+        updatedOrder.id,
+      ])
+    } else {
+      // Use JSON files
+      await ensureDataDirectory()
 
-    // Zoek de index van de te updaten bestelling
-    const index = orders.findIndex((order) => order.id === updatedOrder.id)
+      // Get existing orders
+      const orders = await getAllOrders()
 
-    if (index === -1) {
-      throw new Error(`Bestelling met ID ${updatedOrder.id} niet gevonden`)
+      // Find the index of the order to update
+      const index = orders.findIndex((order) => order.id === updatedOrder.id)
+
+      if (index === -1) {
+        throw new Error(`Order with ID ${updatedOrder.id} not found`)
+      }
+
+      // Update the order
+      orders[index] = updatedOrder
+
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
     }
-
-    // Update de bestelling
-    orders[index] = updatedOrder
-
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
 
     return updatedOrder
   } catch (error) {
-    console.error("Fout bij het updaten van bestelling:", error)
-    throw new Error("Kon bestelling niet updaten")
+    console.error("Error updating order:", error)
+    throw new Error("Could not update order")
   }
 }
 
-// Update status voor alle bestellingen met hetzelfde orderId
+// Update status for all orders with the same orderId
 export async function updateOrderStatus(orderId: string, newStatus: string): Promise<void> {
   try {
-    // Haal bestaande bestellingen op
-    const orders = await getAllOrders()
+    if (useMySQL) {
+      // Use MySQL
+      await query("UPDATE orders SET status = ? WHERE orderId = ?", [newStatus, orderId])
+    } else {
+      // Use JSON files
+      // Get existing orders
+      const orders = await getAllOrders()
 
-    // Update alle bestellingen met het gegeven orderId
-    const updatedOrders = orders.map((order) => {
-      if (order.orderId === orderId) {
-        return { ...order, status: newStatus }
-      }
-      return order
-    })
+      // Update all orders with the given orderId
+      const updatedOrders = orders.map((order) => {
+        if (order.orderId === orderId) {
+          return { ...order, status: newStatus }
+        }
+        return order
+      })
 
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(updatedOrders, null, 2), "utf8")
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(updatedOrders, null, 2), "utf8")
+    }
   } catch (error) {
-    console.error("Fout bij het updaten van bestellingsstatus:", error)
-    throw new Error("Kon bestellingsstatus niet updaten")
+    console.error("Error updating order status:", error)
+    throw new Error("Could not update order status")
   }
 }
 
-// Verwijder een bestelling
+// Delete an order
 export async function deleteOrder(orderId: string): Promise<void> {
   try {
-    await ensureDataDirectory()
+    if (useMySQL) {
+      // Use MySQL
+      await query("DELETE FROM orders WHERE id = ?", [orderId])
+    } else {
+      // Use JSON files
+      await ensureDataDirectory()
 
-    // Haal bestaande bestellingen op
-    const orders = await getAllOrders()
+      // Get existing orders
+      const orders = await getAllOrders()
 
-    // Filter de te verwijderen bestelling
-    const filteredOrders = orders.filter((order) => order.id !== orderId)
+      // Filter out the order to delete
+      const filteredOrders = orders.filter((order) => order.id !== orderId)
 
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(filteredOrders, null, 2), "utf8")
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(filteredOrders, null, 2), "utf8")
+    }
   } catch (error) {
-    console.error("Fout bij het verwijderen van bestelling:", error)
-    throw new Error("Kon bestelling niet verwijderen")
+    console.error("Error deleting order:", error)
+    throw new Error("Could not delete order")
   }
 }
 
-// Update tracking nummer voor een bestelling
+// Update tracking number for an order
 export async function updateTrackingNumber(orderId: string, trackingNumber: string): Promise<Order> {
   try {
-    // Haal bestaande bestellingen op
-    const orders = await getAllOrders()
+    if (useMySQL) {
+      // Use MySQL
+      await query("UPDATE orders SET trackingNumber = ?, trackingSent = false WHERE id = ?", [trackingNumber, orderId])
 
-    // Zoek de bestelling
-    const orderIndex = orders.findIndex((order) => order.id === orderId)
+      // Get the updated order
+      const results = (await query("SELECT * FROM orders WHERE id = ?", [orderId])) as Order[]
+      if (results.length === 0) {
+        throw new Error(`Order with ID ${orderId} not found`)
+      }
+      return results[0]
+    } else {
+      // Use JSON files
+      // Get existing orders
+      const orders = await getAllOrders()
 
-    if (orderIndex === -1) {
-      throw new Error(`Bestelling met ID ${orderId} niet gevonden`)
+      // Find the order
+      const orderIndex = orders.findIndex((order) => order.id === orderId)
+
+      if (orderIndex === -1) {
+        throw new Error(`Order with ID ${orderId} not found`)
+      }
+
+      // Update the tracking number
+      const updatedOrder = {
+        ...orders[orderIndex],
+        trackingNumber,
+        trackingSent: false,
+      }
+
+      // Update the order in the array
+      orders[orderIndex] = updatedOrder
+
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
+
+      return updatedOrder
     }
-
-    // Update het tracking nummer
-    const updatedOrder = {
-      ...orders[orderIndex],
-      trackingNumber,
-      trackingSent: false, // Reset trackingSent wanneer een nieuw nummer wordt toegevoegd
-    }
-
-    // Update de bestelling in de array
-    orders[orderIndex] = updatedOrder
-
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
-
-    return updatedOrder
   } catch (error) {
-    console.error("Fout bij het updaten van tracking nummer:", error)
-    throw new Error("Kon tracking nummer niet updaten")
+    console.error("Error updating tracking number:", error)
+    throw new Error("Could not update tracking number")
   }
 }
 
-// Markeer tracking als verzonden
+// Mark tracking as sent
 export async function markTrackingAsSent(orderId: string): Promise<Order> {
   try {
-    // Haal bestaande bestellingen op
-    const orders = await getAllOrders()
+    if (useMySQL) {
+      // Use MySQL
+      await query("UPDATE orders SET trackingSent = true WHERE id = ?", [orderId])
 
-    // Zoek de bestelling
-    const orderIndex = orders.findIndex((order) => order.id === orderId)
+      // Get the updated order
+      const results = (await query("SELECT * FROM orders WHERE id = ?", [orderId])) as Order[]
+      if (results.length === 0) {
+        throw new Error(`Order with ID ${orderId} not found`)
+      }
+      return results[0]
+    } else {
+      // Use JSON files
+      // Get existing orders
+      const orders = await getAllOrders()
 
-    if (orderIndex === -1) {
-      throw new Error(`Bestelling met ID ${orderId} niet gevonden`)
+      // Find the order
+      const orderIndex = orders.findIndex((order) => order.id === orderId)
+
+      if (orderIndex === -1) {
+        throw new Error(`Order with ID ${orderId} not found`)
+      }
+
+      // Update trackingSent status
+      const updatedOrder = {
+        ...orders[orderIndex],
+        trackingSent: true,
+      }
+
+      // Update the order in the array
+      orders[orderIndex] = updatedOrder
+
+      // Write back to the file
+      await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
+
+      return updatedOrder
     }
-
-    // Update trackingSent status
-    const updatedOrder = {
-      ...orders[orderIndex],
-      trackingSent: true,
-    }
-
-    // Update de bestelling in de array
-    orders[orderIndex] = updatedOrder
-
-    // Schrijf terug naar het bestand
-    await fs.writeFile(DATA_FILE, JSON.stringify(orders, null, 2), "utf8")
-
-    return updatedOrder
   } catch (error) {
-    console.error("Fout bij het markeren van tracking als verzonden:", error)
-    throw new Error("Kon tracking status niet updaten")
+    console.error("Error marking tracking as sent:", error)
+    throw new Error("Could not update tracking status")
   }
 }
 
-// Initialiseer de database
+// Initialize the database
 export async function initDatabase(): Promise<void> {
   try {
-    await ensureDataDirectory()
+    if (!useMySQL) {
+      // Only initialize JSON files if not using MySQL
+      await ensureDataDirectory()
 
-    // Controleer of het bestand bestaat, zo niet, maak het aan
-    try {
-      await fs.access(DATA_FILE)
-    } catch (error) {
-      await fs.writeFile(DATA_FILE, JSON.stringify([]), "utf8")
-    }
-
-    // Probeer het bestand te lezen om te controleren of het werkt
-    try {
-      const data = await fs.readFile(DATA_FILE, "utf8")
-      const orders = JSON.parse(data)
-      console.log("Database geïnitialiseerd, aantal bestellingen:", orders.length)
-    } catch (error) {
-      console.error("Fout bij het lezen van het orders bestand:", error)
+      try {
+        const data = await fs.readFile(DATA_FILE, "utf8")
+        const orders = JSON.parse(data)
+        console.log("Database initialized, order count:", orders.length)
+      } catch (error) {
+        console.error("Error reading orders file:", error)
+      }
     }
   } catch (error) {
-    console.error("Fout bij het initialiseren van de database:", error)
+    console.error("Error initializing database:", error)
   }
 }
-
-// Similarly, modify other functions like addOrder, updateOrder, etc.
-// to check if we should use database or JSON files
