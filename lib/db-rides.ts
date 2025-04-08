@@ -194,3 +194,19 @@ export async function getActiveRides(): Promise<Ride[]> {
     return []
   }
 }
+
+// Add this function to get upcoming rides
+export async function getUpcomingRides(limit?: number) {
+  const rides = await getAllRides()
+
+  // Filter for upcoming rides (today or in the future)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const upcomingRides = rides
+    .filter((ride) => new Date(ride.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  // Return all or limited number
+  return limit ? upcomingRides.slice(0, limit) : upcomingRides
+}

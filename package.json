@@ -59,14 +59,11 @@
     "vaul": "^0.9.6",
     "zod": "latest",
     "@emotion/is-prop-valid": "latest",
-    "@auth/core": "latest",
-    "nodemailer": "latest",
     "fs": "latest",
     "path": "latest",
     "uuid": "latest",
     "framer-motion": "latest",
-    "bcryptjs": "latest",
-    "next-auth": "latest"
+    "bcryptjs": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server"
-import { getActiveRides } from "@/lib/db-rides"
+import { getAllRides } from "@/lib/db-rides"
 
 export async function GET() {
   try {
-    // Get all active rides
-    const allRides = await getActiveRides()
+    // Get all rides
+    const allRides = await getAllRides()
 
-    // Sort by date (upcoming first)
-    const sortedRides = allRides.sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime()
-    })
+    // Get current date
+    const currentDate = new Date()
 
-    // Filter to only include upcoming rides
-    const now = new Date()
-    const upcomingRides = sortedRides.filter((ride) => {
-      const rideDate = new Date(ride.date)
-      return rideDate >= now
-    })
+    // Filter for upcoming rides
+    const upcomingRides = allRides
+      .filter((ride) => {
+        const rideDate = new Date(ride.date)
+        return rideDate >= currentDate
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3)
 
-    // Return the 3 most upcoming rides
-    return NextResponse.json(upcomingRides.slice(0, 3), { status: 200 })
+    return NextResponse.json(upcomingRides)
   } catch (error) {
     console.error("Error fetching featured rides:", error)
     return NextResponse.json({ error: "Failed to fetch featured rides" }, { status: 500 })

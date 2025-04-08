@@ -294,3 +294,14 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     return []
   }
 }
+
+// Add this function to get featured products
+// Haal featured producten op
+// export async function getFeaturedProducts() {
+//   const products = await getAllProducts();
+
+//   // Filter for featured products
+//   // You can define your own criteria for what makes a product "featured"
+//   // For now, let's just return the first 4 products
+//   return products.slice(0, 4);
+// }
