@@ -3,6 +3,8 @@
 import fs from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
+// At the top of the file, import the DB_CONFIG
+import { DB_CONFIG } from "./db-config"
 
 export type Order = {
   id: string
@@ -50,9 +52,31 @@ async function ensureDataDirectory() {
   }
 }
 
+// Add this function to determine if we should use database or JSON
+async function shouldUseDatabase() {
+  return DB_CONFIG.useDatabase && !!DB_CONFIG.databaseUrl
+}
+
 // Lees alle bestellingen uit het bestand
+// Modify the getAllOrders function to check if we should use database
 export async function getAllOrders(): Promise<Order[]> {
   try {
+    // Check if we should use database in production
+    if (await shouldUseDatabase()) {
+      // Use database connection
+      // This is a placeholder - you'll need to implement actual database queries
+      console.log("Using database for getAllOrders")
+
+      // Example using a hypothetical database client
+      // const db = await getDbConnection();
+      // const orders = await db.collection('orders').find().toArray();
+      // return orders;
+
+      // For now, return empty array to prevent errors
+      return []
+    }
+
+    // Otherwise use JSON files (development mode)
     await ensureDataDirectory()
 
     try {
@@ -328,3 +352,6 @@ export async function initDatabase(): Promise<void> {
     console.error("Fout bij het initialiseren van de database:", error)
   }
 }
+
+// Similarly, modify other functions like addOrder, updateOrder, etc.
+// to check if we should use database or JSON files

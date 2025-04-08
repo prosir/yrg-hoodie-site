@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { writeFile } from "fs/promises"
+import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { v4 as uuidv4 } from "uuid"
 
@@ -35,16 +35,14 @@ export async function POST(request: NextRequest) {
 
     // Ensure directory exists
     try {
+      // Create directory recursively if it doesn’t exist
+      await mkdir(uploadDir, { recursive: true })
+
+      // Then write the file
       await writeFile(join(uploadDir, fileName), buffer)
-    } catch (error: any) {
-      // If directory doesn't exist, create it
-      if (error.code === "ENOENT") {
-        const { mkdir } = require("fs/promises")
-        await mkdir(uploadDir, { recursive: true })
-        await writeFile(join(uploadDir, fileName), buffer)
-      } else {
-        throw error
-      }
+    } catch (error) {
+      console.error("Error creating directory or writing file:", error)
+      return NextResponse.json({ error: "Failed to save image" }, { status: 500 })
     }
 
     // Return the path to the uploaded file

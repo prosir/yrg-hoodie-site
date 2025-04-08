@@ -94,17 +94,24 @@ export default function SiteImagesPage() {
     formData.append("file", file)
     formData.append("type", type)
 
-    const response = await fetch("/api/upload-site-image", {
-      method: "POST",
-      body: formData,
-    })
+    try {
+      const response = await fetch("/api/upload-site-image", {
+        method: "POST",
+        body: formData,
+      })
 
-    if (!response.ok) {
-      throw new Error(`Failed to upload ${type} image`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error(`Upload error: ${errorData.error || "Unknown error"}`)
+        throw new Error(`Failed to upload ${type} image: ${errorData.error || response.statusText}`)
+      }
+
+      const data = await response.json()
+      return data.path
+    } catch (error) {
+      console.error(`Error in uploadImage function:`, error)
+      throw error
     }
-
-    const data = await response.json()
-    return data.path
   }
 
   const saveHomeImage = async () => {
