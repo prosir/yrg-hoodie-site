@@ -15,4 +15,3 @@ export async function GET() {
     return NextResponse.json({ message: "Er is een fout opgetreden bij het ophalen van de ritten" }, { status: 500 })
   }
 }
-

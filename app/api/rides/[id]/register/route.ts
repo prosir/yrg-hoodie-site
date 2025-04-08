@@ -68,4 +68,3 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ message: "Er is een fout opgetreden bij het aanmelden" }, { status: 500 })
   }
 }
-

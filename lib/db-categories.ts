@@ -220,4 +220,3 @@ export async function getActiveCategories(): Promise<ProductCategory[]> {
     return []
   }
 }
-

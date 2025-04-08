@@ -1,10 +1,10 @@
-import fs from "fs"
+"use server"
+
+import fs from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
-import { deleteParticipantsByRideId } from "./db-participants"
 
-// Definieer het type voor een rit
-export interface Ride {
+export type Ride = {
   id: string
   title: string
   date: string
@@ -20,20 +20,36 @@ export interface Ride {
   requireAccessCode?: boolean
 }
 
-// Pad naar het JSON-bestand
-const ridesFilePath = path.join(process.cwd(), "data", "rides.json")
+// Pad naar het JSON-bestand voor opslag
+const RIDES_FILE = path.join(process.cwd(), "data", "rides.json")
 
-// Functie om alle ritten op te halen
+// Zorg ervoor dat de data directory en bestand bestaan
+async function ensureRidesFile() {
+  const dataDir = path.join(process.cwd(), "data")
+  try {
+    await fs.access(dataDir)
+  } catch (error) {
+    // Als de directory niet bestaat, maak deze aan
+    console.log("Data directory bestaat niet, wordt aangemaakt...")
+    await fs.mkdir(dataDir, { recursive: true })
+  }
+
+  // Controleer of het bestand bestaat, zo niet, maak het aan
+  try {
+    await fs.access(RIDES_FILE)
+  } catch (error) {
+    // Als het bestand niet bestaat, maak een nieuw bestand met een lege array
+    console.log("Rides.json bestand bestaat niet, wordt aangemaakt...")
+    await fs.writeFile(RIDES_FILE, JSON.stringify([]), "utf8")
+  }
+}
+
+// Haal alle ritten op
 export async function getAllRides(): Promise<Ride[]> {
   try {
-    // Controleer of het bestand bestaat, zo niet, maak het aan
-    if (!fs.existsSync(ridesFilePath)) {
-      fs.writeFileSync(ridesFilePath, JSON.stringify([]))
-      return []
-    }
+    await ensureRidesFile()
 
-    // Lees het bestand
-    const data = fs.readFileSync(ridesFilePath, "utf8")
+    const data = await fs.readFile(RIDES_FILE, "utf8")
     return JSON.parse(data)
   } catch (error) {
     console.error("Fout bij het ophalen van ritten:", error)
@@ -41,93 +57,140 @@ export async function getAllRides(): Promise<Ride[]> {
   }
 }
 
-// Functie om actieve ritten op te halen
-export async function getActiveRides(): Promise<Ride[]> {
-  const rides = await getAllRides()
-  return rides.filter((ride) => ride.active)
-}
-
-// Functie om een rit op te halen op basis van ID
+// Haal een specifieke rit op basis van ID
 export async function getRideById(id: string): Promise<Ride | null> {
-  const rides = await getAllRides()
-  return rides.find((ride) => ride.id === id) || null
-}
-
-// Functie om een nieuwe rit aan te maken
-export async function createRide(rideData: Omit<Ride, "id" | "registered">): Promise<Ride> {
-  const rides = await getAllRides()
-
-  const newRide: Ride = {
-    id: uuidv4(),
-    ...rideData,
-    registered: 0,
+  try {
+    const rides = await getAllRides()
+    const ride = rides.find((ride) => ride.id === id)
+    return ride || null
+  } catch (error) {
+    console.error(`Fout bij het ophalen van rit met ID ${id}:`, error)
+    return null
   }
-
-  rides.push(newRide)
-
-  // Schrijf de bijgewerkte lijst terug naar het bestand
-  fs.writeFileSync(ridesFilePath, JSON.stringify(rides, null, 2))
-
-  return newRide
 }
 
-// Functie om een rit bij te werken
+// Voeg een nieuwe rit toe
+export async function createRide(rideData: Omit<Ride, "id" | "registered">): Promise<Ride> {
+  try {
+    await ensureRidesFile()
+
+    const rides = await getAllRides()
+
+    const newRide: Ride = {
+      ...rideData,
+      id: uuidv4(),
+      registered: 0,
+    }
+
+    rides.push(newRide)
+
+    await fs.writeFile(RIDES_FILE, JSON.stringify(rides, null, 2), "utf8")
+
+    return newRide
+  } catch (error) {
+    console.error("Fout bij het toevoegen van rit:", error)
+    throw error
+  }
+}
+
+// Update een bestaande rit
 export async function updateRide(id: string, rideData: Partial<Ride>): Promise<Ride | null> {
-  const rides = await getAllRides()
+  try {
+    await ensureRidesFile()
 
-  const index = rides.findIndex((ride) => ride.id === id)
-  if (index === -1) return null
+    const rides = await getAllRides()
 
-  rides[index] = { ...rides[index], ...rideData }
+    const rideIndex = rides.findIndex((ride) => ride.id === id)
 
-  // Schrijf de bijgewerkte lijst terug naar het bestand
-  fs.writeFileSync(ridesFilePath, JSON.stringify(rides, null, 2))
+    if (rideIndex === -1) {
+      return null
+    }
 
-  return rides[index]
+    const updatedRide: Ride = {
+      ...rides[rideIndex],
+      ...rideData,
+    }
+
+    rides[rideIndex] = updatedRide
+
+    await fs.writeFile(RIDES_FILE, JSON.stringify(rides, null, 2), "utf8")
+
+    return updatedRide
+  } catch (error) {
+    console.error(`Fout bij het updaten van rit met ID ${id}:`, error)
+    throw error
+  }
 }
 
-// Functie om een rit te verwijderen
+// Verwijder een rit
 export async function deleteRide(id: string): Promise<boolean> {
-  const rides = await getAllRides()
+  try {
+    await ensureRidesFile()
 
-  const filteredRides = rides.filter((ride) => ride.id !== id)
+    const rides = await getAllRides()
 
-  if (filteredRides.length === rides.length) return false
+    const filteredRides = rides.filter((ride) => ride.id !== id)
 
-  // Verwijder ook alle deelnemers voor deze rit
-  await deleteParticipantsByRideId(id)
+    if (filteredRides.length === rides.length) {
+      return false
+    }
 
-  // Schrijf de bijgewerkte lijst terug naar het bestand
-  fs.writeFileSync(ridesFilePath, JSON.stringify(filteredRides, null, 2))
+    await fs.writeFile(RIDES_FILE, JSON.stringify(filteredRides, null, 2), "utf8")
 
-  return true
+    return true
+  } catch (error) {
+    console.error(`Fout bij het verwijderen van rit met ID ${id}:`, error)
+    throw error
+  }
 }
 
-// Functie om een deelnemer toe te voegen aan een rit
+// Registreer een deelnemer voor een rit
 export async function registerParticipant(rideId: string): Promise<Ride | null> {
-  const rides = await getAllRides()
+  try {
+    await ensureRidesFile()
 
-  const index = rides.findIndex((ride) => ride.id === rideId)
-  if (index === -1) return null
+    const rides = await getAllRides()
 
-  // Controleer of er nog plekken beschikbaar zijn
-  if (rides[index].registered >= rides[index].spots) return null
+    const rideIndex = rides.findIndex((ride) => ride.id === rideId)
 
-  rides[index].registered += 1
+    if (rideIndex === -1) {
+      return null
+    }
 
-  // Schrijf de bijgewerkte lijst terug naar het bestand
-  fs.writeFileSync(ridesFilePath, JSON.stringify(rides, null, 2))
+    rides[rideIndex].registered = (rides[rideIndex].registered || 0) + 1
 
-  return rides[index]
+    await fs.writeFile(RIDES_FILE, JSON.stringify(rides, null, 2), "utf8")
+
+    return rides[rideIndex]
+  } catch (error) {
+    console.error(`Fout bij het registreren van deelnemer voor rit met ID ${rideId}:`, error)
+    throw error
+  }
 }
 
-// Functie om te controleren of een toegangscode geldig is
-export async function validateAccessCode(rideId: string, code: string): Promise<boolean> {
-  const ride = await getRideById(rideId)
+// Valideer de toegangscode voor een rit
+export async function validateAccessCode(rideId: string, accessCode: string): Promise<boolean> {
+  try {
+    const ride = await getRideById(rideId)
 
-  if (!ride) return false
-  if (!ride.requireAccessCode) return true
+    if (!ride) {
+      return false
+    }
 
-  return ride.accessCode === code
+    return ride.accessCode === accessCode
+  } catch (error) {
+    console.error(`Fout bij het valideren van toegangscode voor rit met ID ${rideId}:`, error)
+    return false
+  }
 }
 
+// Haal alle actieve ritten op
+export async function getActiveRides(): Promise<Ride[]> {
+  try {
+    const rides = await getAllRides()
+    return rides.filter((ride) => ride.active)
+  } catch (error) {
+    console.error("Fout bij het ophalen van actieve ritten:", error)
+    return []
+  }
+}

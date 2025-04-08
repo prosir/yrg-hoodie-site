@@ -106,4 +106,3 @@ export function MotorcycleLoader({ isLoading, progress, onComplete }: SimpleLoad
     </div>
   )
 }
-

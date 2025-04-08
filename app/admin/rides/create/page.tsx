@@ -346,4 +346,3 @@ export default function CreateRidePage() {
     </div>
   )
 }
-

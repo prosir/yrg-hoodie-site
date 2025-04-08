@@ -91,4 +91,3 @@ export async function deleteParticipantsByRideId(rideId: string): Promise<number
 
   return deletedCount
 }
-

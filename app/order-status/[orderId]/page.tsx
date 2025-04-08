@@ -460,4 +460,3 @@ export default function OrderStatusPage({ params }: { params: { orderId: string 
     </div>
   )
 }
-

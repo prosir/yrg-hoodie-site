@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { getSession } from "@/lib/auth"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Check for the admin session cookie
-    const sessionCookie = request.cookies.get("admin_session")
+    const session = await getSession()
 
-    // Return whether the user is authenticated or not
+    if (!session) {
+      return NextResponse.json({ authenticated: false })
+    }
+
     return NextResponse.json({
-      authenticated: sessionCookie?.value === "authenticated",
+      authenticated: true,
+      username: session,
     })
   } catch (error) {
-    console.error("Error checking session:", error)
-    return NextResponse.json({ authenticated: false, error: "Failed to check session" }, { status: 500 })
+    console.error("Session check error:", error)
+    return NextResponse.json({ authenticated: false })
   }
 }
-

@@ -1,9 +1,39 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Instagram, Mail, MapPin, Phone } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import Image from "next/image"
 
+interface SiteConfig {
+  contactHeroImage: string
+}
+
 export default function ContactPage() {
+  const [contactImage, setContactImage] = useState<string>("/motorcycle-hero.jpg")
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchConfig() {
+      try {
+        const response = await fetch("/api/site-config")
+        if (response.ok) {
+          const data = await response.json()
+          if (data.contactHeroImage) {
+            setContactImage(data.contactHeroImage)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching contact image:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchConfig()
+  }, [])
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -12,7 +42,13 @@ export default function ContactPage() {
 
         {/* Hero section */}
         <div className="relative w-full h-64 md:h-80 mb-12 rounded-xl overflow-hidden">
-          <Image src="/motorcycle-hero.jpg" alt="YoungRidersOost motorrijders" fill className="object-cover" priority />
+          <Image
+            src={contactImage || "/placeholder.svg"}
+            alt="YoungRidersOost motorrijders"
+            fill
+            className="object-cover"
+            priority
+          />
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <h2 className="text-white text-3xl md:text-4xl font-bold text-center px-4">Rij met ons mee!</h2>
           </div>
@@ -107,4 +143,3 @@ export default function ContactPage() {
     </div>
   )
 }
-

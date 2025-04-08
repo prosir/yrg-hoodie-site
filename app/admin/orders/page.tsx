@@ -348,4 +348,3 @@ function OrdersTable({ orders, loading, getStatusBadgeColor, formatDate, handleV
     </div>
   )
 }
-

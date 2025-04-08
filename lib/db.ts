@@ -328,4 +328,3 @@ export async function initDatabase(): Promise<void> {
     console.error("Fout bij het initialiseren van de database:", error)
   }
 }
-

@@ -154,4 +154,3 @@ export function PrintTable({ groupedOrders, totalItems, crewItems, regularItems 
     </div>
   )
 }
-

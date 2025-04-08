@@ -173,4 +173,3 @@ export function TrackingDialog({ order, isOpen, onClose, onSuccess }: TrackingDi
     </Dialog>
   )
 }
-

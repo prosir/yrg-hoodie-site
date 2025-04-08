@@ -269,4 +269,3 @@ export default function ProductPage({ params }: { params: { color: string } }) {
     </div>
   )
 }
-

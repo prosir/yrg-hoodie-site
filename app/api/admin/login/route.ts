@@ -1,31 +1,39 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { createSession } from "@/lib/auth"
+import fs from "fs"
+import path from "path"
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const { username, password } = await request.json()
 
-    // Simple admin authentication - in a real app, this would be handled more securely
-    if (username === "admin" && password === "youngriders2025") {
-      // Create a response with a cookie
-      const response = NextResponse.json({ success: true })
-
-      // Set a secure cookie for admin session
-      response.cookies.set("admin_session", "authenticated", {
-        path: "/",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-      })
-
-      return response
-    } else {
-      return NextResponse.json({ success: false, message: "Invalid credentials" })
+    // Simple validation
+    if (!username || !password) {
+      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
     }
+
+    // Read users from JSON file
+    const usersPath = path.join(process.cwd(), "data", "users.json")
+    const usersData = fs.readFileSync(usersPath, "utf8")
+    const users = JSON.parse(usersData)
+
+    // Find user
+    const user = users.find((u: any) => u.username === username)
+
+    // Simple password check (in production, use proper hashing)
+    if (!user || user.password !== password) {
+      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 })
+    }
+
+    // Create session
+    await createSession(username)
+
+    return NextResponse.json({
+      success: true,
+      redirectUrl: "/admin/dashboard",
+    })
   } catch (error) {
     console.error("Login error:", error)
-    return NextResponse.json({ success: false, error: "An error occurred during login" }, { status: 500 })
+    return NextResponse.json({ error: "Authentication failed" }, { status: 500 })
   }
 }
-

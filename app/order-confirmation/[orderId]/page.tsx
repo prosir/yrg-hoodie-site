@@ -262,4 +262,3 @@ export default function OrderConfirmationPage({ params }: { params: { orderId: s
     </div>
   )
 }
-

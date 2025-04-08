@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { clearSession } from "@/lib/auth"
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    // Create a response that will delete the cookie
-    const response = NextResponse.json({ success: true })
-
-    // Delete the admin session cookie by setting maxAge to 0
-    response.cookies.set("admin_session", "", {
-      path: "/",
-      expires: new Date(0),
-      maxAge: 0,
-    })
-
-    return response
+    await clearSession()
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Logout error:", error)
-    return NextResponse.json({ success: false, error: "An error occurred during logout" }, { status: 500 })
+    return NextResponse.json({ error: "Logout failed" }, { status: 500 })
   }
 }
-

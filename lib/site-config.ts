@@ -7,6 +7,9 @@ export type SiteConfig = {
   maintenanceMode: boolean
   shopClosed: boolean
   maintenancePassword: string
+  homeHeroImage: string
+  contactHeroImage: string
+  logoPath: string
 }
 
 // Pad naar het JSON-bestand voor opslag
@@ -33,6 +36,9 @@ async function ensureConfigFile() {
       maintenanceMode: false,
       shopClosed: false,
       maintenancePassword: "admin123",
+      homeHeroImage: "/placeholder.svg?height=1080&width=1920",
+      contactHeroImage: "/motorcycle-hero.jpg",
+      logoPath: "/logo.png",
     }
     await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2), "utf8")
   }
@@ -52,6 +58,9 @@ export async function getSiteConfig(): Promise<SiteConfig> {
       maintenanceMode: false,
       shopClosed: false,
       maintenancePassword: "admin123",
+      homeHeroImage: "/placeholder.svg?height=1080&width=1920",
+      contactHeroImage: "/motorcycle-hero.jpg",
+      logoPath: "/logo.png",
     }
   }
 }
@@ -119,3 +128,65 @@ export async function updateMaintenancePassword(password: string): Promise<SiteC
   }
 }
 
+// Update de home hero afbeelding
+export async function updateHomeHeroImage(imagePath: string): Promise<SiteConfig> {
+  try {
+    await ensureConfigFile()
+
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
+
+    // Update de home hero afbeelding
+    config.homeHeroImage = imagePath
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
+  } catch (error) {
+    console.error("Fout bij het updaten van home hero afbeelding:", error)
+    throw error
+  }
+}
+
+// Update de contact hero afbeelding
+export async function updateContactHeroImage(imagePath: string): Promise<SiteConfig> {
+  try {
+    await ensureConfigFile()
+
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
+
+    // Update de contact hero afbeelding
+    config.contactHeroImage = imagePath
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
+  } catch (error) {
+    console.error("Fout bij het updaten van contact hero afbeelding:", error)
+    throw error
+  }
+}
+
+// Update het logo pad
+export async function updateLogoPath(logoPath: string): Promise<SiteConfig> {
+  try {
+    await ensureConfigFile()
+
+    // Haal huidige configuratie op
+    const config = await getSiteConfig()
+
+    // Update het logo pad
+    config.logoPath = logoPath
+
+    // Schrijf terug naar het bestand
+    await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8")
+
+    return config
+  } catch (error) {
+    console.error("Fout bij het updaten van logo pad:", error)
+    throw error
+  }
+}

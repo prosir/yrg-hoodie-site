@@ -104,4 +104,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: "Er is een fout opgetreden bij het verwijderen van de rit" }, { status: 500 })
   }
 }
-

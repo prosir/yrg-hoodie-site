@@ -26,11 +26,18 @@ interface Ride {
   [key: string]: any
 }
 
+interface SiteConfig {
+  homeHeroImage: string
+}
+
 export default function Home() {
   const [isMounted, setIsMounted] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [rides, setRides] = useState<Ride[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>({
+    homeHeroImage: "/placeholder.svg?height=1080&width=1920",
+  })
 
   useEffect(() => {
     setIsMounted(true)
@@ -38,6 +45,13 @@ export default function Home() {
     async function fetchData() {
       try {
         setIsLoading(true)
+
+        // Fetch site configuration
+        const configResponse = await fetch("/api/site-config")
+        if (configResponse.ok) {
+          const configData = await configResponse.json()
+          setSiteConfig(configData)
+        }
 
         // Fetch products from our API endpoint
         const productsResponse = await fetch("/api/featured-products")
@@ -69,7 +83,7 @@ export default function Home() {
         {/* Background */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/placeholder.svg?height=1080&width=1920"
+            src={siteConfig.homeHeroImage || "/placeholder.svg"}
             alt="Motorcycle riders"
             fill
             className="object-cover brightness-90"
@@ -352,4 +366,3 @@ export default function Home() {
     </div>
   )
 }
-

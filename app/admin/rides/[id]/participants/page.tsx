@@ -340,4 +340,3 @@ export default function ParticipantsPage({ params }: { params: { id: string } })
     </div>
   )
 }
-

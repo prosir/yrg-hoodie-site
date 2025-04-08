@@ -390,4 +390,3 @@ Bekijk je bestelling hier: ${statusUrl}`
     </div>
   )
 }
-

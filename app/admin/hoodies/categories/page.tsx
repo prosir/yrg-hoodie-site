@@ -562,4 +562,3 @@ export default function HoodieCategories() {
     </div>
   )
 }
-

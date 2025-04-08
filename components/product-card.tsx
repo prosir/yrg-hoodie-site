@@ -55,4 +55,3 @@ export function ProductCard({ color, colorName, image, price }: ProductCardProps
     </Card>
   )
 }
-

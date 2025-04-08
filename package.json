@@ -62,7 +62,8 @@
     "fs": "latest",
     "path": "latest",
     "uuid": "latest",
-    "framer-motion": "latest"
+    "framer-motion": "latest",
+    "bcryptjs": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

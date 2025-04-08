@@ -559,4 +559,3 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     </div>
   )
 }
-

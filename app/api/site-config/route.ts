@@ -1,21 +1,19 @@
-import { getSiteConfig } from "@/lib/site-config"
 import { NextResponse } from "next/server"
+import { getSiteConfig } from "@/lib/site-config"
 
-// API route om de site configuratie op te halen
 export async function GET() {
   try {
     const config = await getSiteConfig()
 
-    // Verwijder het wachtwoord uit de response voor veiligheid
-    const safeConfig = {
+    return NextResponse.json({
       maintenanceMode: config.maintenanceMode,
       shopClosed: config.shopClosed,
-    }
-
-    return NextResponse.json(safeConfig)
+      homeHeroImage: config.homeHeroImage,
+      contactHeroImage: config.contactHeroImage,
+      logoPath: config.logoPath,
+    })
   } catch (error) {
     console.error("Error fetching site config:", error)
     return NextResponse.json({ error: "Failed to fetch site configuration" }, { status: 500 })
   }
 }
-

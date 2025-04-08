@@ -421,4 +421,3 @@ export default function EditRidePage({ params }: { params: { id: string } }) {
     </div>
   )
 }
-
