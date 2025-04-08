@@ -17,24 +17,32 @@ export async function createSession(userId: string) {
 
 // Get the current session
 export async function getSession() {
-  // In Next.js 14, cookies() doesn't need to be awaited
-  // but we need to use it directly without storing in a variable
-  const sessionId = cookies().get("admin_session")?.value
-  if (!sessionId) return null
+  // Use a try-catch block to handle any errors
+  try {
+    const sessionId = cookies().get("admin_session")?.value
+    if (!sessionId) return null
 
-  const user = await getUserById(sessionId)
-  return user
-}
-
-// Validate the session
-export async function validateSession(sessionId: string) {
-  if (!sessionId) return false
-
-  const user = await getUserById(sessionId)
-  return !!user
+    const user = await getUserById(sessionId)
+    return user
+  } catch (error) {
+    console.error("Error getting session:", error)
+    return null
+  }
 }
 
 // Clear the session
 export async function clearSession() {
   cookies().delete("admin_session")
 }
+
+// Validate session
+export async function validateSession(sessionId: string): Promise<boolean> {
+  try {
+    const user = await getUserById(sessionId)
+    return !!user
+  } catch (error) {
+    console.error("Error validating session:", error)
+    return false
+  }
+}
+// Check if the session is valid
